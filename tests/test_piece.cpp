@@ -2,7 +2,6 @@
 #include "doctest.h"
 #include "../src/Piece.h"
 
-
 TEST_CASE("Piece stores color, kind and position correctly") {
     Piece p(Color::White, Kind::Queen, Position(0, 4));   
     CHECK(p.color == Color::White);
