@@ -5,14 +5,18 @@
 #include <stdexcept>
 #include "Board.h"
 
+enum class BoardErrorType { UnknownToken, RowWidthMismatch };
+
 class InvalidBoardException : public std::runtime_error {
 public:
-    InvalidBoardException(const std::string& msg) : std::runtime_error(msg) {}
+    BoardErrorType type;
+    InvalidBoardException(BoardErrorType type, const std::string& msg)
+        : std::runtime_error(msg), type(type) {}
 };
 
 inline Piece parseToken(const std::string& token, int row, int col) {
     if (token.size() != 2) {
-        throw InvalidBoardException("Invalid piece token: " + token);
+        throw InvalidBoardException(BoardErrorType::UnknownToken, "Invalid piece token: " + token);
     }
 
     Color color;
@@ -21,7 +25,7 @@ inline Piece parseToken(const std::string& token, int row, int col) {
     } else if (token[0] == 'b') {
         color = Color::Black;
     } else {
-        throw InvalidBoardException("Invalid color letter in token: " + token);
+        throw InvalidBoardException(BoardErrorType::UnknownToken, "Invalid color letter in token: " + token);
     }
 
     Kind kind;
@@ -33,7 +37,7 @@ inline Piece parseToken(const std::string& token, int row, int col) {
         case 'N': kind = Kind::kNight; break;
         case 'P': kind = Kind::Pawn;   break;
         default:
-            throw InvalidBoardException("Invalid kind letter in token: " + token);
+            throw InvalidBoardException(BoardErrorType::UnknownToken, "Invalid kind letter in token: " + token);
     }
 
     return Piece(color, kind, Position(row, col));
@@ -60,7 +64,7 @@ inline Board parseBoard(std::istream& input) {
         if (expectedCols == -1) {
             expectedCols = col;
         } else if (col != expectedCols) {
-            throw InvalidBoardException("Inconsistent row length");
+            throw InvalidBoardException(BoardErrorType::RowWidthMismatch, "Inconsistent row length");
         }
 
         rowIndex++;
