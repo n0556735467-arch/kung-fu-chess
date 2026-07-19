@@ -1,6 +1,6 @@
 // placeholder C++ file for board mapper (empty)
 #include "board_mapper.hpp"
-#include "../model/constants.hpp"
+#include "constants.hpp"
 
 std::optional<Position> pixelToCell(int x, int y, int rows, int cols) {
     if (x < 0 || y < 0) {

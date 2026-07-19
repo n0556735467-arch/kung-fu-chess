@@ -14,7 +14,7 @@ struct Piece {
     Position cell;
     PieceState state;
 
-    Piece(int id, Color color, Kind kind, Position cell);
+    Piece(int id, Color color, Kind kind, const Position& cell);
 };
 
 #endif
