@@ -11,7 +11,11 @@ const Piece* GameEngine::pieceAt(Position pos) const {
 void GameEngine::requestMove(Position from, Position to) {
     lastMoveFrom = from;
     lastMoveTo = to;
-    // כאן יתחבר RuleEngine + RealTimeArbiter בהמשך
+    arbiter.startMotion(from, to, board);
+}
+
+void GameEngine::wait(int ms) {
+    arbiter.wait(ms, board);
 }
 
 const Board& GameEngine::getBoard() const {

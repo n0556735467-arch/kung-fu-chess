@@ -3,6 +3,7 @@
 #define GAME_ENGINE_HPP
 #include <optional>
 #include "../model/board.hpp"
+#include "../realtime/real_time_arbiter.hpp"
 
 class GameEngine {
 public:
@@ -10,6 +11,7 @@ public:
 
     const Piece* pieceAt(Position pos) const;
     void requestMove(Position from, Position to);
+    void wait(int ms);
     const Board& getBoard() const;
 
     std::optional<Position> getLastMoveFrom() const;
@@ -17,6 +19,7 @@ public:
 
 private:
     Board board;
+    RealTimeArbiter arbiter;
     std::optional<Position> lastMoveFrom;
     std::optional<Position> lastMoveTo;
 };
