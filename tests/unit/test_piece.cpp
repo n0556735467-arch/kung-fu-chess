@@ -15,3 +15,8 @@ TEST_CASE("Two pieces can have different ids with same color and kind") {
     Piece p2(1, Color::White, Kind::Pawn, Position(1, 1));
     CHECK(p1.id != p2.id);
 }
+
+TEST_CASE("New piece starts in Idle state") {
+    Piece p(0, Color::White, Kind::King, Position(0, 4));
+    CHECK(p.state == PieceState::Idle);
+}
