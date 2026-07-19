@@ -1,5 +1,6 @@
 // placeholder C++ file for Board (empty)
 #include <stdexcept>
+#include <utility>
 #include "board.hpp"
 
 Board::Board(int rows, int cols) : rows(rows), cols(cols) {
@@ -22,7 +23,7 @@ void Board::addPiece(Piece piece) {
     if (pieceAt(piece.cell) != nullptr) {
         throw std::runtime_error("Cell already occupied");
     }
-    pieces.push_back(piece);
+    pieces.push_back(std::move(piece));
 }
 
 void Board::removePiece(Position pos) {

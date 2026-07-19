@@ -13,7 +13,7 @@ static char kindChar(Kind kind) {
         case Kind::Queen:  return 'Q';
         case Kind::Rook:   return 'R';
         case Kind::Bishop: return 'B';
-        case Kind::kNight: return 'N';
+        case Kind::Knight: return 'N';
         case Kind::Pawn:   return 'P';
     }
     return '?';

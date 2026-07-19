@@ -4,7 +4,7 @@
 #include "position.hpp"
 
 enum class Color { White, Black };
-enum class Kind  { King, Queen, Rook, Bishop, kNight, Pawn };
+enum class Kind  { King, Queen, Rook, Bishop, Knight, Pawn };
 enum class PieceState { Idle, Moving, Captured };
 
 struct Piece {

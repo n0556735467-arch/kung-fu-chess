@@ -26,7 +26,7 @@ Piece parseToken(const std::string& token, int row, int col, int id) {
         case 'Q': kind = Kind::Queen;  break;
         case 'R': kind = Kind::Rook;   break;
         case 'B': kind = Kind::Bishop; break;
-        case 'N': kind = Kind::kNight; break;
+        case 'N': kind = Kind::Knight; break;
         case 'P': kind = Kind::Pawn;   break;
         default:
             throw InvalidBoardException(BoardErrorType::UnknownToken, "Invalid kind letter in token: " + token);

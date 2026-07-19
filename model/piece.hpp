@@ -4,7 +4,7 @@
 #include "position.hpp"
 
 enum class Color { White, Black };
-enum class Kind  { King, Queen, Rook, Bishop, kNight, Pawn };
+enum class Kind  { King, Queen, Rook, Bishop, Knight, Pawn };
 enum class PieceState { Idle, Moving, Captured };
 
 struct Piece {
@@ -14,7 +14,7 @@ struct Piece {
     Position cell;
     PieceState state;
 
-    Piece(int id, Color color, Kind kind, Position cell);
+    Piece(int id, Color color, Kind kind, const Position& cell);
 };
 
 #endif

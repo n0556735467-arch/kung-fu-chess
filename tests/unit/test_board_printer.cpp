@@ -9,7 +9,7 @@ TEST_CASE("Prints a board back in canonical form") {
     Board b(3, 3);
     b.addPiece(Piece(0, Color::White, Kind::King, Position(0, 0)));
     b.addPiece(Piece(1, Color::Black, Kind::Rook, Position(0, 2)));
-    b.addPiece(Piece(2, Color::White, Kind::kNight, Position(2, 1)));
+    b.addPiece(Piece(2, Color::White, Kind::Knight, Position(2, 1)));
     b.addPiece(Piece(3, Color::Black, Kind::King, Position(2, 2)));
 
     std::ostringstream out;
