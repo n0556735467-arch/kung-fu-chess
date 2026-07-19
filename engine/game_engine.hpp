@@ -1,9 +1,11 @@
 // placeholder header for game engine
+// engine/game_engine.hpp
 #ifndef GAME_ENGINE_HPP
 #define GAME_ENGINE_HPP
 #include <optional>
 #include "../model/board.hpp"
 #include "../realtime/real_time_arbiter.hpp"
+#include "../rules/rule_engine.hpp"
 
 class GameEngine {
 public:
@@ -20,6 +22,7 @@ public:
 private:
     Board board;
     RealTimeArbiter arbiter;
+    RuleEngine ruleEngine;
     std::optional<Position> lastMoveFrom;
     std::optional<Position> lastMoveTo;
 };

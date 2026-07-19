@@ -1,4 +1,4 @@
-// placeholder C++ file for game engine (empty)
+// engine/game_engine.cpp
 #include "game_engine.hpp"
 
 GameEngine::GameEngine(Board board) : board(board) {
@@ -9,6 +9,11 @@ const Piece* GameEngine::pieceAt(Position pos) const {
 }
 
 void GameEngine::requestMove(Position from, Position to) {
+    MoveValidation result = ruleEngine.validateMove(board, from, to);
+    if (!result.isValid) {
+        return;
+    }
+
     lastMoveFrom = from;
     lastMoveTo = to;
     arbiter.startMotion(from, to, board);
