@@ -59,3 +59,31 @@ TEST_CASE("Multiple partial waits accumulate until motion completes") {
     CHECK(engine.getBoard().pieceAt(Position(0, 0)) == nullptr);
     CHECK(engine.getBoard().pieceAt(Position(0, 1)) != nullptr);
 }
+
+TEST_CASE("A piece cannot be redirected while already moving") {
+    std::istringstream boardInput("wR . .\n. . .\n. . .\n");
+    Board board = parseBoard(boardInput);
+    GameEngine engine(board);
+
+    engine.requestMove(Position(0, 0), Position(0, 2));  // 2 תאים = 2000ms
+    engine.requestMove(Position(0, 0), Position(0, 1));  // נסיון הסטה - אמור להידחות
+
+    engine.wait(2000);
+
+    CHECK(engine.getBoard().pieceAt(Position(0, 2)) != nullptr);
+    CHECK(engine.getBoard().pieceAt(Position(0, 1)) == nullptr);
+}
+
+TEST_CASE("After arrival, a piece can move again immediately with no cooldown") {
+    std::istringstream boardInput("wR . .\n. . .\n. . .\n");
+    Board board = parseBoard(boardInput);
+    GameEngine engine(board);
+
+    engine.requestMove(Position(0, 0), Position(0, 1));
+    engine.wait(1000);
+
+    engine.requestMove(Position(0, 1), Position(0, 2));
+    engine.wait(1000);
+
+    CHECK(engine.getBoard().pieceAt(Position(0, 2)) != nullptr);
+}

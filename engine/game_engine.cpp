@@ -14,9 +14,13 @@ void GameEngine::requestMove(Position from, Position to) {
         return;
     }
 
+    bool started = arbiter.startMotion(from, to, board);
+    if (!started) {
+        return;
+    }
+
     lastMoveFrom = from;
     lastMoveTo = to;
-    arbiter.startMotion(from, to, board);
 }
 
 void GameEngine::wait(int ms) {
