@@ -1,5 +1,7 @@
 #include <algorithm>
 #include <cstdlib>
+#include <iostream>
+
 #include "real_time_arbiter.hpp"
 
 int RealTimeArbiter::distanceInCells(Position from, Position to) const {
@@ -34,21 +36,28 @@ bool RealTimeArbiter::startMotion(Position from, Position to, Board& board) {
     return true;
 }
 
-void RealTimeArbiter::wait(int ms, Board& board) {
+bool RealTimeArbiter::wait(int ms, Board& board) {
     for (Motion& m : activeMotions) {
         m.remainingMs -= ms;
     }
 
     for (size_t i = 0; i < activeMotions.size();) {
         if (activeMotions[i].remainingMs <= 0) {
-            Piece* moving = board.findPieceById(activeMotions[i].pieceId);
+            int pieceId = activeMotions[i].pieceId;
+            Position to = activeMotions[i].to;
+
+            Piece* moving = board.findPieceById(pieceId);
 
             if (moving != nullptr) {
-                const Piece* captured = board.pieceAt(activeMotions[i].to);
-                if (captured != nullptr && captured->id != moving->id) {
-                    board.removePiece(activeMotions[i].to);
+                const Piece* captured = board.pieceAt(to);
+                if (captured != nullptr && captured->id != pieceId) {
+                    board.removePiece(to);
                 }
-                moving->cell = activeMotions[i].to;
+
+                moving = board.findPieceById(pieceId);  // מצביע טרי, אחרי השינוי בוקטור
+                if (moving != nullptr) {
+                    moving->cell = to;
+                }
             }
 
             activeMotions.erase(activeMotions.begin() + i);

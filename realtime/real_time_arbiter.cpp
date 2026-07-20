@@ -36,7 +36,9 @@ bool RealTimeArbiter::startMotion(Position from, Position to, Board& board) {
     return true;
 }
 
-void RealTimeArbiter::wait(int ms, Board& board) {
+bool RealTimeArbiter::wait(int ms, Board& board) {
+    bool kingCaptured = false;
+
     for (Motion& m : activeMotions) {
         m.remainingMs -= ms;
     }
@@ -51,10 +53,13 @@ void RealTimeArbiter::wait(int ms, Board& board) {
             if (moving != nullptr) {
                 const Piece* captured = board.pieceAt(to);
                 if (captured != nullptr && captured->id != pieceId) {
+                    if (captured->kind == Kind::King) {
+                        kingCaptured = true;
+                    }
                     board.removePiece(to);
                 }
 
-                moving = board.findPieceById(pieceId);  // מצביע טרי, אחרי השינוי בוקטור
+                moving = board.findPieceById(pieceId);
                 if (moving != nullptr) {
                     moving->cell = to;
                 }
@@ -65,4 +70,6 @@ void RealTimeArbiter::wait(int ms, Board& board) {
             i++;
         }
     }
+
+    return kingCaptured;
 }

@@ -1,5 +1,3 @@
-// placeholder header for game engine
-// engine/game_engine.hpp
 #ifndef GAME_ENGINE_HPP
 #define GAME_ENGINE_HPP
 #include <optional>
@@ -15,6 +13,7 @@ public:
     void requestMove(Position from, Position to);
     void wait(int ms);
     const Board& getBoard() const;
+    bool isGameOver() const;
 
     std::optional<Position> getLastMoveFrom() const;
     std::optional<Position> getLastMoveTo() const;
@@ -23,6 +22,7 @@ private:
     Board board;
     RealTimeArbiter arbiter;
     RuleEngine ruleEngine;
+    bool gameOver = false;
     std::optional<Position> lastMoveFrom;
     std::optional<Position> lastMoveTo;
 };
