@@ -22,10 +22,15 @@ bool RealTimeArbiter::startMotion(Position from, Position to, Board& board) {
         return false;
     }
 
+    const Piece* piece = board.pieceAt(from);
+    if (piece == nullptr) {
+        return false;
+    }
+
     int cells = distanceInCells(from, to);
     int durationMs = cells * 1000;
 
-    activeMotions.push_back(Motion(from, to, durationMs));
+    activeMotions.push_back(Motion(piece->id, from, to, durationMs));
     return true;
 }
 
@@ -36,11 +41,16 @@ void RealTimeArbiter::wait(int ms, Board& board) {
 
     for (size_t i = 0; i < activeMotions.size();) {
         if (activeMotions[i].remainingMs <= 0) {
-            const Piece* captured = board.pieceAt(activeMotions[i].to);
-            if (captured != nullptr) {
-                board.removePiece(activeMotions[i].to);
+            Piece* moving = board.findPieceById(activeMotions[i].pieceId);
+
+            if (moving != nullptr) {
+                const Piece* captured = board.pieceAt(activeMotions[i].to);
+                if (captured != nullptr && captured->id != moving->id) {
+                    board.removePiece(activeMotions[i].to);
+                }
+                moving->cell = activeMotions[i].to;
             }
-            board.movePiece(activeMotions[i].from, activeMotions[i].to);
+
             activeMotions.erase(activeMotions.begin() + i);
         } else {
             i++;

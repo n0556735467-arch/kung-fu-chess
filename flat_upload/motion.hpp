@@ -4,11 +4,12 @@
 #include "position.hpp"
 
 struct Motion {
+    int pieceId;
     Position from;
     Position to;
     int remainingMs;
 
-    Motion(Position from, Position to, int durationMs);
+    Motion(int pieceId, Position from, Position to, int durationMs);
 };
 
 #endif

@@ -13,6 +13,7 @@ public:
 
     bool isInBounds(Position pos) const;
     const Piece* pieceAt(Position pos) const;
+    Piece* findPieceById(int id);
     void addPiece(Piece piece);
     void removePiece(Position pos);
     void movePiece(Position from, Position to);
