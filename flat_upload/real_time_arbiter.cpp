@@ -62,6 +62,13 @@ bool RealTimeArbiter::wait(int ms, Board& board) {
                 moving = board.findPieceById(pieceId);
                 if (moving != nullptr) {
                     moving->cell = to;
+
+                    if (moving->kind == Kind::Pawn) {
+                        int lastRow = (moving->color == Color::White) ? 0 : board.rows - 1;
+                        if (moving->cell.row == lastRow) {
+                            moving->kind = Kind::Queen;
+                        }
+                    }
                 }
             }
 
