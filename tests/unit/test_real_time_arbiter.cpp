@@ -29,3 +29,17 @@ TEST_CASE("Board updates after motion completes") {
     CHECK(engine.getBoard().pieceAt(Position(0, 0)) == nullptr);
     CHECK(engine.getBoard().pieceAt(Position(0, 2)) != nullptr);
 }
+
+TEST_CASE("Capturing an enemy piece removes it from the board on arrival") {
+    std::istringstream boardInput("wR . bP\n. . .\n. . .\n");
+    Board board = parseBoard(boardInput);
+    GameEngine engine(board);
+
+    engine.requestMove(Position(0, 0), Position(0, 2));
+    engine.wait(2000);
+
+    const Piece* atDest = engine.getBoard().pieceAt(Position(0, 2));
+    REQUIRE(atDest != nullptr);
+    CHECK(atDest->color == Color::White);
+    CHECK(atDest->kind == Kind::Rook);
+}

@@ -1,4 +1,3 @@
-// placeholder C++ file for real time arbiter (empty)
 #include <algorithm>
 #include <cstdlib>
 #include "real_time_arbiter.hpp"
@@ -33,6 +32,11 @@ void RealTimeArbiter::wait(int ms, Board& board) {
     activeMotion->remainingMs -= ms;
 
     if (activeMotion->remainingMs <= 0) {
+        const Piece* captured = board.pieceAt(activeMotion->to);
+        if (captured != nullptr) {
+            board.removePiece(activeMotion->to);
+        }
+
         board.movePiece(activeMotion->from, activeMotion->to);
         activeMotion.reset();
     }
