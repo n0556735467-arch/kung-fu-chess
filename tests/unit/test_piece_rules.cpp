@@ -117,3 +117,51 @@ TEST_CASE("King moves one cell only") {
     CHECK(foundOneCell);
     CHECK_FALSE(foundTwoCells);
 }
+
+TEST_CASE("White pawn moves one row upward to empty cell") {
+    Board board(4, 3);
+    board.addPiece(Piece(0, Color::White, Kind::Pawn, Position(2, 1)));
+
+    PawnRule rule;
+    auto dests = rule.legalDestinations(board, *board.pieceAt(Position(2, 1)));
+
+    bool foundForward = false, foundDouble = false;
+    for (auto& p : dests) {
+        if (p == Position(1, 1)) foundForward = true;
+        if (p == Position(0, 1)) foundDouble = true;
+    }
+    CHECK(foundForward == true);
+    CHECK(foundDouble == false);
+}
+
+TEST_CASE("Black pawn moves one row downward to empty cell") {
+    Board board(4, 3);
+    board.addPiece(Piece(0, Color::Black, Kind::Pawn, Position(1, 1)));
+
+    PawnRule rule;
+    auto dests = rule.legalDestinations(board, *board.pieceAt(Position(1, 1)));
+
+    bool foundForward = false;
+    for (auto& p : dests) {
+        if (p == Position(2, 1)) foundForward = true;
+    }
+    CHECK(foundForward == true);
+}
+
+TEST_CASE("Pawn captures diagonally but not straight forward") {
+    Board board(4, 3);
+    board.addPiece(Piece(0, Color::White, Kind::Pawn, Position(2, 1)));
+    board.addPiece(Piece(1, Color::Black, Kind::Pawn, Position(1, 0)));
+    board.addPiece(Piece(2, Color::Black, Kind::Pawn, Position(1, 1)));
+
+    PawnRule rule;
+    auto dests = rule.legalDestinations(board, *board.pieceAt(Position(2, 1)));
+
+    bool foundDiagonalCapture = false, foundStraightCapture = false;
+    for (auto& p : dests) {
+        if (p == Position(1, 0)) foundDiagonalCapture = true;
+        if (p == Position(1, 1)) foundStraightCapture = true;
+    }
+    CHECK(foundDiagonalCapture == true);
+    CHECK(foundStraightCapture == false);
+}

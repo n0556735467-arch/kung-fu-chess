@@ -37,4 +37,8 @@ public:
 
 const PieceRule& getPieceRule(Kind kind);
 
+class PawnRule : public PieceRule {
+public:
+    std::vector<Position> legalDestinations(const Board& board, const Piece& piece) const override;
+};
 #endif

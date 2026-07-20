@@ -95,3 +95,31 @@ const PieceRule& getPieceRule(Kind kind) {
         default:           return king;  // Pawn not implemented this iteration
     }
 }
+
+std::vector<Position> PawnRule::legalDestinations(const Board& board, const Piece& piece) const {
+    std::vector<Position> result;
+    int dir = (piece.color == Color::White) ? -1 : 1;
+
+    Position forward(piece.cell.row + dir, piece.cell.col);
+    if (board.isInBounds(forward) && board.pieceAt(forward) == nullptr) {
+        result.push_back(forward);
+    }
+
+    Position captureLeft(piece.cell.row + dir, piece.cell.col - 1);
+    if (board.isInBounds(captureLeft)) {
+        const Piece* target = board.pieceAt(captureLeft);
+        if (target != nullptr && target->color != piece.color) {
+            result.push_back(captureLeft);
+        }
+    }
+
+    Position captureRight(piece.cell.row + dir, piece.cell.col + 1);
+    if (board.isInBounds(captureRight)) {
+        const Piece* target = board.pieceAt(captureRight);
+        if (target != nullptr && target->color != piece.color) {
+            result.push_back(captureRight);
+        }
+    }
+
+    return result;
+}

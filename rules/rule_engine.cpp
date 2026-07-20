@@ -24,6 +24,8 @@ MoveValidation RuleEngine::validateMove(const Board& board, Position from, Posit
         case Kind::Queen:  { QueenRule r;  legal = r.legalDestinations(board, *source); break; }
         case Kind::Knight: { KnightRule r; legal = r.legalDestinations(board, *source); break; }
         case Kind::King:   { KingRule r;   legal = r.legalDestinations(board, *source); break; }
+        case Kind::Pawn:   { PawnRule r;   legal = r.legalDestinations(board, *source); break; }
+
         default:
             return MoveValidation{false, "illegal_piece_move"};
     }
@@ -36,3 +38,4 @@ MoveValidation RuleEngine::validateMove(const Board& board, Position from, Posit
 
     return MoveValidation{false, "illegal_piece_move"};
 }
+
