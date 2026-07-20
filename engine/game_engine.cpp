@@ -26,6 +26,13 @@ void GameEngine::requestMove(Position from, Position to) {
     lastMoveTo = to;
 }
 
+bool GameEngine::requestJump(Position at) {
+    if (gameOver) {
+        return false;
+    }
+    return arbiter.startJump(at, board);
+}
+
 void GameEngine::wait(int ms) {
     bool kingCaptured = arbiter.wait(ms, board);
     if (kingCaptured) {

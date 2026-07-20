@@ -99,7 +99,7 @@ const PieceRule& getPieceRule(Kind kind) {
 std::vector<Position> PawnRule::legalDestinations(const Board& board, const Piece& piece) const {
     std::vector<Position> result;
     int dir = (piece.color == Color::White) ? -1 : 1;
-    int startRow = (piece.color == Color::White) ? board.rows - 2 : 1;
+    int startRow = (piece.color == Color::White) ? board.rows - 1 : 0;
 
     Position oneStep(piece.cell.row + dir, piece.cell.col);
     bool oneStepClear = board.isInBounds(oneStep) && board.pieceAt(oneStep) == nullptr;
