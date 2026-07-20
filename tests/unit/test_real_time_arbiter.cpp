@@ -43,3 +43,19 @@ TEST_CASE("Capturing an enemy piece removes it from the board on arrival") {
     CHECK(atDest->color == Color::White);
     CHECK(atDest->kind == Kind::Rook);
 }
+
+TEST_CASE("Multiple partial waits accumulate until motion completes") {
+    std::istringstream boardInput("wR . .\n. . .\n. . .\n");
+    Board board = parseBoard(boardInput);
+    GameEngine engine(board);
+
+    engine.requestMove(Position(0, 0), Position(0, 1));
+
+    engine.wait(500);
+    CHECK(engine.getBoard().pieceAt(Position(0, 0)) != nullptr);
+    CHECK(engine.getBoard().pieceAt(Position(0, 1)) == nullptr);
+
+    engine.wait(600);
+    CHECK(engine.getBoard().pieceAt(Position(0, 0)) == nullptr);
+    CHECK(engine.getBoard().pieceAt(Position(0, 1)) != nullptr);
+}
