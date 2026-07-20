@@ -61,11 +61,11 @@ TEST_CASE("Second in-board click sends the correct source and destination and cl
     Controller controller(engine);
 
     controller.click(50, 50);
-    controller.click(250, 250);
+    controller.click(150, 150);
 
     REQUIRE(engine.getLastMoveFrom().has_value());
     REQUIRE(engine.getLastMoveTo().has_value());
     CHECK(engine.getLastMoveFrom().value() == Position(0, 0));
-    CHECK(engine.getLastMoveTo().value() == Position(2, 2));
+    CHECK(engine.getLastMoveTo().value() == Position(1, 1));
     CHECK(controller.hasSelection() == false);
 }
