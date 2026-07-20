@@ -87,3 +87,16 @@ TEST_CASE("After arrival, a piece can move again immediately with no cooldown") 
 
     CHECK(engine.getBoard().pieceAt(Position(0, 2)) != nullptr);
 }
+
+TEST_CASE("Pawn promotes to Queen upon reaching the last row") {
+    std::istringstream boardInput(". . .\nwP . .\n. . .\n");
+    Board board = parseBoard(boardInput);
+    GameEngine engine(board);
+
+    engine.requestMove(Position(1, 0), Position(0, 0));
+    engine.wait(1000);
+
+    const Piece* promoted = engine.getBoard().pieceAt(Position(0, 0));
+    REQUIRE(promoted != nullptr);
+    CHECK(promoted->kind == Kind::Queen);
+}

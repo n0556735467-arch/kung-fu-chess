@@ -7,7 +7,7 @@
 class RealTimeArbiter {
 public:
     bool startMotion(Position from, Position to, Board& board);
-    void wait(int ms, Board& board);
+    bool wait(int ms, Board& board);
 
 private:
     std::vector<Motion> activeMotions;

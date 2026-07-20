@@ -1,4 +1,3 @@
-#include <iostream>
 #include "game_engine.hpp"
 
 GameEngine::GameEngine(Board board) : board(board) {
@@ -9,18 +8,16 @@ const Piece* GameEngine::pieceAt(Position pos) const {
 }
 
 void GameEngine::requestMove(Position from, Position to) {
-    MoveValidation result = ruleEngine.validateMove(board, from, to);
-    std::cerr << "[DEBUG] requestMove from(" << from.row << "," << from.col
-               << ") to(" << to.row << "," << to.col
-               << ") valid=" << result.isValid << " reason=" << result.reason << "\n";
+    if (gameOver) {
+        return;
+    }
 
+    MoveValidation result = ruleEngine.validateMove(board, from, to);
     if (!result.isValid) {
         return;
     }
 
     bool started = arbiter.startMotion(from, to, board);
-    std::cerr << "[DEBUG] startMotion started=" << started << "\n";
-
     if (!started) {
         return;
     }
@@ -30,7 +27,14 @@ void GameEngine::requestMove(Position from, Position to) {
 }
 
 void GameEngine::wait(int ms) {
-    arbiter.wait(ms, board);
+    bool kingCaptured = arbiter.wait(ms, board);
+    if (kingCaptured) {
+        gameOver = true;
+    }
+}
+
+bool GameEngine::isGameOver() const {
+    return gameOver;
 }
 
 const Board& GameEngine::getBoard() const {

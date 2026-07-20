@@ -120,15 +120,15 @@ TEST_CASE("King moves one cell only") {
 
 TEST_CASE("White pawn moves one row upward to empty cell") {
     Board board(4, 3);
-    board.addPiece(Piece(0, Color::White, Kind::Pawn, Position(2, 1)));
+    board.addPiece(Piece(0, Color::White, Kind::Pawn, Position(3, 1)));
 
     PawnRule rule;
-    auto dests = rule.legalDestinations(board, *board.pieceAt(Position(2, 1)));
+    auto dests = rule.legalDestinations(board, *board.pieceAt(Position(3, 1)));
 
     bool foundForward = false, foundDouble = false;
     for (auto& p : dests) {
-        if (p == Position(1, 1)) foundForward = true;
-        if (p == Position(0, 1)) foundDouble = true;
+        if (p == Position(2, 1)) foundForward = true;
+        if (p == Position(1, 1)) foundDouble = true;
     }
     CHECK(foundForward == true);
     CHECK(foundDouble == false);
@@ -164,4 +164,49 @@ TEST_CASE("Pawn captures diagonally but not straight forward") {
     }
     CHECK(foundDiagonalCapture == true);
     CHECK(foundStraightCapture == false);
+}
+
+TEST_CASE("White pawn can move two cells from its start row when path is clear") {
+    Board board(8, 3);
+    board.addPiece(Piece(0, Color::White, Kind::Pawn, Position(6, 1)));
+
+    PawnRule rule;
+    auto dests = rule.legalDestinations(board, *board.pieceAt(Position(6, 1)));
+
+    bool foundDouble = false;
+    for (auto& p : dests) {
+        if (p == Position(4, 1)) foundDouble = true;
+    }
+    CHECK(foundDouble == true);
+}
+
+TEST_CASE("Pawn cannot move two cells if not on its start row") {
+    Board board(8, 3);
+    board.addPiece(Piece(0, Color::White, Kind::Pawn, Position(5, 1)));
+
+    PawnRule rule;
+    auto dests = rule.legalDestinations(board, *board.pieceAt(Position(5, 1)));
+
+    bool foundDouble = false;
+    for (auto& p : dests) {
+        if (p == Position(3, 1)) foundDouble = true;
+    }
+    CHECK(foundDouble == false);
+}
+
+TEST_CASE("Pawn cannot jump over a blocker for double move") {
+    Board board(8, 3);
+    board.addPiece(Piece(0, Color::White, Kind::Pawn, Position(6, 1)));
+    board.addPiece(Piece(1, Color::Black, Kind::Pawn, Position(5, 1)));
+
+    PawnRule rule;
+    auto dests = rule.legalDestinations(board, *board.pieceAt(Position(6, 1)));
+
+    bool foundOne = false, foundTwo = false;
+    for (auto& p : dests) {
+        if (p == Position(5, 1)) foundOne = true;
+        if (p == Position(4, 1)) foundTwo = true;
+    }
+    CHECK(foundOne == false);
+    CHECK(foundTwo == false);
 }
