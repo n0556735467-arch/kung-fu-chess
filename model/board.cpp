@@ -18,6 +18,15 @@ const Piece* Board::pieceAt(Position pos) const {
     return nullptr;
 }
 
+Piece* Board::findPieceById(int id) {
+    for (Piece& p : pieces) {
+        if (p.id == id) {
+            return &p;
+        }
+    }
+    return nullptr;
+}
+
 void Board::addPiece(Piece piece) {
     if (pieceAt(piece.cell) != nullptr) {
         throw std::runtime_error("Cell already occupied");
