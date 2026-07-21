@@ -1,4 +1,3 @@
-// placeholder C++ file for Board (empty)
 #include <stdexcept>
 #include "board.hpp"
 

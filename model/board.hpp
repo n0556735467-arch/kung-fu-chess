@@ -8,8 +8,8 @@ class Board {
 public:
     Board(int rows, int cols);
 
-    int rows;
-    int cols;
+    const int rows;
+    const int cols;
 
     bool isInBounds(Position pos) const;
     const Piece* pieceAt(Position pos) const;

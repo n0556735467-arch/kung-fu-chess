@@ -11,6 +11,8 @@ public:
 
     const Piece* pieceAt(Position pos) const;
     void requestMove(Position from, Position to);
+    bool requestJump(Position at);
+
     void wait(int ms);
     const Board& getBoard() const;
     bool isGameOver() const;
