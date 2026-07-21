@@ -1,4 +1,3 @@
-// placeholder header for controller
 #ifndef CONTROLLER_HPP
 #define CONTROLLER_HPP
 #include <optional>

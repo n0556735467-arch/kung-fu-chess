@@ -1,4 +1,3 @@
-// placeholder C++ file for board printer (empty)
 #include <vector>
 #include <string>
 #include "board_printer.hpp"

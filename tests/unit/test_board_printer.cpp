@@ -1,5 +1,3 @@
-// placeholder unit test for board printer (empty)
-// tests/unit/test_board_printer.cpp
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 #include <sstream>

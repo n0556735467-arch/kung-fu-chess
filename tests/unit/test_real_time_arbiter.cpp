@@ -1,5 +1,3 @@
-// placeholder unit test for real time arbiter (empty)
-// tests/unit/test_real_time_arbiter.cpp
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 #include <sstream>

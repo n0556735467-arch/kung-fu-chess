@@ -1,4 +1,3 @@
-// placeholder unit test for board mapper (empty)
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 #include "../../input/board_mapper.hpp"

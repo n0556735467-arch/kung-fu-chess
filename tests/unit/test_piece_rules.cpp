@@ -1,4 +1,3 @@
-// tests/unit/test_piece_rules.cpp
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 #include "../../rules/piece_rules.hpp"

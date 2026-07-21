@@ -1,4 +1,3 @@
-// placeholder C++ file for rule engine (empty)
 #include "rule_engine.hpp"
 #include "piece_rules.hpp"
 

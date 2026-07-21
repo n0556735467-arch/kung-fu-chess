@@ -1,4 +1,3 @@
-// placeholder C++ file for board parser (empty)
 #include <sstream>
 #include "board_parser.hpp"
 

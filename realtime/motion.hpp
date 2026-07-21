@@ -1,4 +1,3 @@
-// placeholder header for Motion
 #ifndef MOTION_HPP
 #define MOTION_HPP
 #include "../model/position.hpp"

@@ -1,4 +1,3 @@
-// placeholder header for piece rules
 #ifndef PIECE_RULES_HPP
 #define PIECE_RULES_HPP
 #include <vector>

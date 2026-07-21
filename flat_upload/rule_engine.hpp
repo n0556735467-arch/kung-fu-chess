@@ -1,4 +1,3 @@
-// placeholder header for rule engine
 #ifndef RULE_ENGINE_HPP
 #define RULE_ENGINE_HPP
 #include <string>

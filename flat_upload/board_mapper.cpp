@@ -1,4 +1,3 @@
-// placeholder C++ file for board mapper (empty)
 #include "board_mapper.hpp"
 #include "constants.hpp"
 

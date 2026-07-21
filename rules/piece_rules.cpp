@@ -1,4 +1,3 @@
-// placeholder C++ file for piece rules (empty)
 #include "piece_rules.hpp"
 
 static void slide(const Board& board, const Piece& piece, int drow, int dcol, std::vector<Position>& out) {

@@ -1,4 +1,3 @@
-// placeholder C++ file for controller (empty)
 #include "controller.hpp"
 #include "board_mapper.hpp"
 

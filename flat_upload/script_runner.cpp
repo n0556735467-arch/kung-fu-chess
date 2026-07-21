@@ -2,7 +2,7 @@
 #include <string>
 #include "script_runner.hpp"
 #include "board_printer.hpp"
-#include "../input/board_mapper.hpp"
+#include "board_mapper.hpp"
 
 void ScriptRunner::run(std::istream& in, std::ostream& out, GameEngine& engine, Controller& controller) {
     std::string line;

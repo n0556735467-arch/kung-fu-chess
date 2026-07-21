@@ -1,4 +1,3 @@
-// placeholder header for board mapper
 #ifndef BOARD_MAPPER_HPP
 #define BOARD_MAPPER_HPP
 #include <optional>

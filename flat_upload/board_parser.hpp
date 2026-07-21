@@ -1,4 +1,3 @@
-// placeholder header for board parser
 #ifndef BOARD_PARSER_HPP
 #define BOARD_PARSER_HPP
 #include <istream>

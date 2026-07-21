@@ -1,4 +1,3 @@
-// model/position.hpp
 #ifndef POSITION_HPP
 #define POSITION_HPP
 

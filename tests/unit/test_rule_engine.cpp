@@ -1,4 +1,3 @@
-// tests/unit/test_rule_engine.cpp
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 #include "../../rules/rule_engine.hpp"

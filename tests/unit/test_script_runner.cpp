@@ -1,7 +1,7 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 #include <sstream>
-#include "../../io/script_runner.hpp"
+#include "../../texttests/script_runner.hpp"
 #include "../../io/board_parser.hpp"
 
 TEST_CASE("ScriptRunner dispatches click and print board correctly") {

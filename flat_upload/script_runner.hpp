@@ -2,8 +2,8 @@
 #define SCRIPT_RUNNER_HPP
 #include <istream>
 #include <ostream>
-#include "../engine/game_engine.hpp"
-#include "../input/controller.hpp"
+#include "game_engine.hpp"
+#include "controller.hpp"
 
 class ScriptRunner {
 public:

@@ -1,4 +1,3 @@
-// placeholder header for board printer
 #ifndef BOARD_PRINTER_HPP
 #define BOARD_PRINTER_HPP
 #include <ostream>

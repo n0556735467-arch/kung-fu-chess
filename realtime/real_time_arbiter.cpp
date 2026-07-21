@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include "real_time_arbiter.hpp"
+#include "constants.hpp"
 
 int RealTimeArbiter::distanceInCells(Position from, Position to) const {
     int rowDiff = std::abs(to.row - from.row);
@@ -28,7 +29,7 @@ bool RealTimeArbiter::startMotion(Position from, Position to, Board& board) {
     }
 
     int cells = distanceInCells(from, to);
-    int durationMs = cells * 1000;
+    int durationMs = cells * MOVE_DURATION_MS_PER_CELL;
 
     activeMotions.push_back(Motion(piece->id, from, to, durationMs));
     return true;
@@ -52,7 +53,7 @@ bool RealTimeArbiter::startJump(Position at, Board& board) {
         }
     }
 
-    activeJumps.push_back(Jump(piece->id, 1000));
+    activeJumps.push_back(Jump(piece->id, MOVE_DURATION_MS_PER_CELL));
     return true;
 }
 

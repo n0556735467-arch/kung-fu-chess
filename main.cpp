@@ -3,7 +3,7 @@
 #include <string>
 #include "io/board_parser.hpp"
 #include "io/board_printer.hpp"
-#include "io/script_runner.hpp"
+#include "texttests/script_runner.hpp"
 #include "engine/game_engine.hpp"
 #include "input/controller.hpp"
 #include "input/board_mapper.hpp"

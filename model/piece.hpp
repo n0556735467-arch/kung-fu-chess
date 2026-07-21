@@ -1,4 +1,3 @@
-// placeholder header for Piece
 #ifndef PIECE_HPP
 #define PIECE_HPP
 #include "position.hpp"

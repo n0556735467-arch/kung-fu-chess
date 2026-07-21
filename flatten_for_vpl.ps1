@@ -1,4 +1,4 @@
-$srcDirs = @("model", "io", "input", "engine", "realtime", "rules")
+$srcDirs = @("model", "io", "input", "engine", "realtime", "rules", "texttests")
 $destDir = "flat_upload"
 
 if (Test-Path $destDir) { Remove-Item $destDir -Recurse -Force }
