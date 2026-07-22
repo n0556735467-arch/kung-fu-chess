@@ -91,7 +91,7 @@ const PieceRule& getPieceRule(Kind kind) {
         case Kind::Queen:  return queen;
         case Kind::Knight: return knight;
         case Kind::King:   return king;
-        default:           return king;  // Pawn not implemented this iteration
+        default:           return king; 
     }
 }
 

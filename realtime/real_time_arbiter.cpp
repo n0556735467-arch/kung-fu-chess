@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include "real_time_arbiter.hpp"
-#include "constants.hpp"
+#include "../model/constants.hpp"
 
 int RealTimeArbiter::distanceInCells(Position from, Position to) const {
     int rowDiff = std::abs(to.row - from.row);
