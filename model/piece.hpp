@@ -4,7 +4,7 @@
 
 enum class Color { White, Black };
 enum class Kind  { King, Queen, Rook, Bishop, Knight, Pawn };
-enum class PieceState { Idle, Moving, Captured };
+enum class PieceState { Idle, Moving, Airborne, Captured };
 
 struct Piece {
     int id;

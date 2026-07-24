@@ -32,6 +32,11 @@ bool RealTimeArbiter::startMotion(Position from, Position to, Board& board) {
     int durationMs = cells * MOVE_DURATION_MS_PER_CELL;
 
     activeMotions.push_back(Motion(piece->id, from, to, durationMs));
+    
+    Piece* mutablePiece = board.findPieceById(piece->id);
+    if (mutablePiece != nullptr) {
+        mutablePiece->state = PieceState::Moving;
+    }
     return true;
 }
 
@@ -53,7 +58,13 @@ bool RealTimeArbiter::startJump(Position at, Board& board) {
         }
     }
 
-    activeJumps.push_back(Jump(piece->id, MOVE_DURATION_MS_PER_CELL));
+    activeJumps.push_back(Jump(piece->id, JUMP_DURATION_MS));
+    
+    Piece* mutablePiece = board.findPieceById(piece->id);
+    if (mutablePiece != nullptr) {
+        mutablePiece->state = PieceState::Airborne;
+    }
+    
     return true;
 }
 
@@ -104,6 +115,7 @@ bool RealTimeArbiter::wait(int ms, Board& board) {
                     moving = board.findPieceById(pieceId);
                     if (moving != nullptr) {
                         moving->cell = to;
+                        moving->state = PieceState::Idle;
 
                         if (moving->kind == Kind::Pawn) {
                             int lastRow = (moving->color == Color::White) ? 0 : board.rows - 1;
@@ -121,13 +133,18 @@ bool RealTimeArbiter::wait(int ms, Board& board) {
         }
     }
 
+
     for (size_t i = 0; i < activeJumps.size();) {
-        if (activeJumps[i].remainingMs <= 0) {
-            activeJumps.erase(activeJumps.begin() + i);
-        } else {
-            i++;
+    if (activeJumps[i].remainingMs <= 0) {
+        Piece* p = board.findPieceById(activeJumps[i].pieceId);
+        if (p != nullptr) {
+            p->state = PieceState::Idle;
         }
+        activeJumps.erase(activeJumps.begin() + i);
+    } else {
+        i++;
     }
+}
 
     return kingCaptured;
 }

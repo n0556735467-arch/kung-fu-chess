@@ -98,3 +98,21 @@ TEST_CASE("Pawn promotes to Queen upon reaching the last row") {
     REQUIRE(promoted != nullptr);
     CHECK(promoted->kind == Kind::Queen);
 }
+
+TEST_CASE("Piece state changes to Moving during motion and back to Idle on arrival") {
+    std::istringstream boardInput("wR . .\n. . .\n. . .\n");
+    Board board = parseBoard(boardInput);
+    GameEngine engine(board);
+
+    engine.requestMove(Position(0, 0), Position(0, 1));
+
+    const Piece* duringMove = engine.getBoard().pieceAt(Position(0, 0));
+    REQUIRE(duringMove != nullptr);
+    CHECK(duringMove->state == PieceState::Moving);
+
+    engine.wait(1000);
+
+    const Piece* afterArrival = engine.getBoard().pieceAt(Position(0, 1));
+    REQUIRE(afterArrival != nullptr);
+    CHECK(afterArrival->state == PieceState::Idle);
+}
