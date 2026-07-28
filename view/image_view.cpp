@@ -1,30 +1,29 @@
 #include "image_view.hpp"
 
-ImageView::ImageView(const AnimationConfigProvider& configProvider)
-    : configProvider(configProvider) {}
-
-void ImageView::startState(int pieceId, const std::string& stateName) {
-    AnimationConfig cfg = configProvider.configFor(stateName);
+void ImageView::startState(int pieceId, const AnimationConfigProvider& provider,
+                            const std::string& stateName) {
+    AnimationConfig cfg = provider.configFor(stateName);
     animations.insert_or_assign(pieceId, PerPieceAnim{stateName, AnimationClock(cfg)});
 }
 
-void ImageView::update(int pieceId, const std::string& triggeredState, int ms) {
+void ImageView::update(int pieceId, const AnimationConfigProvider& provider,
+                        const std::string& triggeredState, int ms) {
     bool isForceTrigger = (triggeredState == "move" || triggeredState == "jump");
 
     auto it = animations.find(pieceId);
     if (it == animations.end()) {
-        startState(pieceId, triggeredState);
+        startState(pieceId, provider, triggeredState);
     } else if (isForceTrigger && it->second.stateName != triggeredState) {
-        startState(pieceId, triggeredState);
+        startState(pieceId, provider, triggeredState);
     }
 
     it = animations.find(pieceId);
     it->second.clock.advance(ms);
 
     if (it->second.clock.isFinished()) {
-        AnimationConfig cfg = configProvider.configFor(it->second.stateName);
+        AnimationConfig cfg = provider.configFor(it->second.stateName);
         if (!cfg.nextStateWhenFinished.empty()) {
-            startState(pieceId, cfg.nextStateWhenFinished);
+            startState(pieceId, provider, cfg.nextStateWhenFinished);
         }
     }
 }
