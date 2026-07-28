@@ -5,6 +5,8 @@
 #include "../realtime/real_time_arbiter.hpp"
 #include "../rules/rule_engine.hpp"
 #include "game_snapshot.hpp"
+#include <vector>
+#include "move_log_entry.hpp"
 
 class GameEngine {
 public:
@@ -20,6 +22,9 @@ public:
     void wait(int ms);
     const Board& getBoard() const;
     bool isGameOver() const;
+
+    const std::vector<MoveLogEntry>& getMoveLog() const;
+
 
     std::optional<Position> getLastMoveFrom() const;
     std::optional<Position> getLastMoveTo() const;
@@ -39,6 +44,10 @@ private:
     bool gameOver = false;
     std::optional<Position> lastMoveFrom;
     std::optional<Position> lastMoveTo;
+
+    int elapsedTotalMs = 0;
+    std::vector<MoveLogEntry> moveLog;
+    static std::string squareName(Position pos, int boardRows);
 };
 
 #endif

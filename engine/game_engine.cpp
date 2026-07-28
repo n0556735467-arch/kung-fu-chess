@@ -22,6 +22,23 @@ void GameEngine::requestMove(Position from, Position to) {
         return;
     }
 
+            const Piece* moved = board.pieceAt(from);
+if (moved != nullptr) {
+    std::string code;
+    code += (moved->color == Color::White ? 'w' : 'b');
+    switch (moved->kind) {
+        case Kind::King:   code += 'K'; break;
+        case Kind::Queen:  code += 'Q'; break;
+        case Kind::Rook:   code += 'R'; break;
+        case Kind::Bishop: code += 'B'; break;
+        case Kind::Knight: code += 'N'; break;
+        case Kind::Pawn:   code += 'P'; break;
+    }
+    std::string text = code + " " + squareName(from, board.rows) + "-" + squareName(to, board.rows);
+    moveLog.push_back(MoveLogEntry{elapsedTotalMs, text});
+}
+
+
     lastMoveFrom = from;
     lastMoveTo = to;
 }
@@ -46,6 +63,7 @@ int GameEngine::pieceValue(Kind kind) {
 }
 
 void GameEngine::wait(int ms) {
+    elapsedTotalMs += ms;
     bool kingCaptured = arbiter.wait(ms, board);
     if (kingCaptured) {
         gameOver = true;
@@ -88,6 +106,8 @@ GameSnapshot GameEngine::snapshot() const {
     snap.rows = board.rows;
     snap.cols = board.cols;
     snap.gameOver = gameOver;
+    snap.whiteScore = whiteScoreValue;
+    snap.blackScore = blackScoreValue;
 
     for (const Piece& p : board.getPieces()) {
         PieceSnapshot ps{p.id, p.color, p.kind, p.state, p.cell, arbiter.activeMotionFor(p.id)};
@@ -95,4 +115,14 @@ GameSnapshot GameEngine::snapshot() const {
     }
 
     return snap;
+}
+
+std::string GameEngine::squareName(Position pos, int boardRows) {
+    char file = 'a' + pos.col;
+    int rank = boardRows - pos.row;
+    return std::string(1, file) + std::to_string(rank);
+}
+
+const std::vector<MoveLogEntry>& GameEngine::getMoveLog() const {
+    return moveLog;
 }

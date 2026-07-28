@@ -56,3 +56,17 @@ TEST_CASE("Capturing a pawn adds one point to the capturing side") {
     CHECK(engine.whiteScore() == 1);
     CHECK(engine.blackScore() == 0);
 }
+
+TEST_CASE("Move log records each move with elapsed time and square names") {
+    Board board(8, 8);
+    board.addPiece(Piece(0, Color::White, Kind::Pawn, Position(6, 4)));
+
+    GameEngine engine(board);
+    engine.wait(500);
+    engine.requestMove(Position(6, 4), Position(4, 4));
+
+    const std::vector<MoveLogEntry>& log = engine.getMoveLog();
+    REQUIRE(log.size() == 1);
+    CHECK(log[0].timeMs == 500);
+    CHECK(log[0].text == "wP e2-e4");
+}
