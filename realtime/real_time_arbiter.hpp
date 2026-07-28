@@ -6,6 +6,7 @@
 #include "../model/board.hpp"
 #include <optional>
 #include "motion_snapshot.hpp"
+#include "captured_piece.hpp"
 
 class RealTimeArbiter {
 public:
@@ -13,12 +14,15 @@ public:
     bool startJump(Position at, Board& board);
     bool wait(int ms, Board& board);
     std::optional<MotionSnapshot> activeMotionFor(int pieceId) const;
-    
+    std::vector<CapturedPiece> consumeCaptures();
+
 private:
     std::vector<Motion> activeMotions;
     std::vector<Jump> activeJumps;
     int distanceInCells(Position from, Position to) const;
     bool hasMotionFrom(Position from) const;
+    std::vector<CapturedPiece> pendingCaptures;
+
 };
 
 #endif

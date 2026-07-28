@@ -157,3 +157,20 @@ TEST_CASE("activeMotionFor reports progress as motion advances") {
 
     CHECK_FALSE(arbiter.activeMotionFor(0).has_value());
 }
+
+TEST_CASE("consumeCaptures reports a piece captured on arrival") {
+    Board board(1, 3);
+    board.addPiece(Piece(0, Color::White, Kind::Rook, Position(0, 0)));
+    board.addPiece(Piece(1, Color::Black, Kind::Pawn, Position(0, 2)));
+
+    RealTimeArbiter arbiter;
+    arbiter.startMotion(Position(0, 0), Position(0, 2), board);
+    arbiter.wait(2 * MOVE_DURATION_MS_PER_CELL, board);
+
+    std::vector<CapturedPiece> captures = arbiter.consumeCaptures();
+    REQUIRE(captures.size() == 1);
+    CHECK(captures[0].color == Color::Black);
+    CHECK(captures[0].kind == Kind::Pawn);
+
+    CHECK(arbiter.consumeCaptures().empty());
+}

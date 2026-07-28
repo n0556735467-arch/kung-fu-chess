@@ -33,12 +33,35 @@ bool GameEngine::requestJump(Position at) {
     return arbiter.startJump(at, board);
 }
 
+int GameEngine::pieceValue(Kind kind) {
+    switch (kind) {
+        case Kind::Pawn:   return 1;
+        case Kind::Knight: return 3;
+        case Kind::Bishop: return 3;
+        case Kind::Rook:   return 5;
+        case Kind::Queen:  return 9;
+        case Kind::King:   return 0;
+    }
+    return 0;
+}
+
 void GameEngine::wait(int ms) {
     bool kingCaptured = arbiter.wait(ms, board);
     if (kingCaptured) {
         gameOver = true;
     }
+        for (const CapturedPiece& cp : arbiter.consumeCaptures()) {
+        int value = pieceValue(cp.kind);
+        if (cp.color == Color::White) {
+            blackScoreValue += value;
+        } else {
+            whiteScoreValue += value;
+        }
+    }
 }
+
+int GameEngine::whiteScore() const { return whiteScoreValue; }
+int GameEngine::blackScore() const { return blackScoreValue; }
 
 bool GameEngine::isGameOver() const {
     return gameOver;

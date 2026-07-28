@@ -100,6 +100,10 @@ bool RealTimeArbiter::wait(int ms, Board& board) {
             }
 
             if (airCapture) {
+                    const Piece* arriving = board.findPieceById(pieceId);
+    if (arriving != nullptr) {
+        pendingCaptures.push_back(CapturedPiece{arriving->color, arriving->kind});
+    }
                 board.removePiece(from);
             } else {
                 Piece* moving = board.findPieceById(pieceId);
@@ -114,6 +118,7 @@ bool RealTimeArbiter::wait(int ms, Board& board) {
                             if (captured->kind == Kind::King) {
                                 kingCaptured = true;
                             }
+                            pendingCaptures.push_back(CapturedPiece{captured->color, captured->kind});
                             board.removePiece(to);
                         }
                     }
@@ -168,4 +173,10 @@ std::optional<MotionSnapshot> RealTimeArbiter::activeMotionFor(int pieceId) cons
         }
     }
     return std::nullopt;
+}
+
+std::vector<CapturedPiece> RealTimeArbiter::consumeCaptures() {
+    std::vector<CapturedPiece> result = pendingCaptures;
+    pendingCaptures.clear();
+    return result;
 }

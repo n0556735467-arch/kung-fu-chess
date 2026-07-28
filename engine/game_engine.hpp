@@ -8,6 +8,9 @@
 
 class GameEngine {
 public:
+    int whiteScore() const;
+    int blackScore() const;
+    
     GameEngine(Board board);
 
     const Piece* pieceAt(Position pos) const;
@@ -26,6 +29,10 @@ public:
     GameSnapshot snapshot() const;
 
 private:
+    int whiteScoreValue = 0;
+    int blackScoreValue = 0;
+    static int pieceValue(Kind kind);
+
     Board board;
     RealTimeArbiter arbiter;
     RuleEngine ruleEngine;

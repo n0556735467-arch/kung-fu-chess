@@ -43,3 +43,16 @@ TEST_CASE("Snapshot includes motion progress for a moving piece") {
     REQUIRE(snap.pieces[0].motion.has_value());
     CHECK(snap.pieces[0].motion->progress == doctest::Approx(0.5));
 }
+
+TEST_CASE("Capturing a pawn adds one point to the capturing side") {
+    Board board(1, 3);
+    board.addPiece(Piece(0, Color::White, Kind::Rook, Position(0, 0)));
+    board.addPiece(Piece(1, Color::Black, Kind::Pawn, Position(0, 2)));
+
+    GameEngine engine(board);
+    engine.requestMove(Position(0, 0), Position(0, 2));
+    engine.wait(2 * MOVE_DURATION_MS_PER_CELL);
+
+    CHECK(engine.whiteScore() == 1);
+    CHECK(engine.blackScore() == 0);
+}
