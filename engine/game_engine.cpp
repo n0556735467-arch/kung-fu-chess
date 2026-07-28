@@ -56,6 +56,10 @@ std::optional<Position> GameEngine::getLastMoveTo() const {
     return lastMoveTo;
 }
 
+std::vector<Position> GameEngine::legalDestinationsFrom(Position from) const {
+    return ruleEngine.legalDestinations(board, from);
+}
+
 GameSnapshot GameEngine::snapshot() const {
     GameSnapshot snap;
     snap.rows = board.rows;

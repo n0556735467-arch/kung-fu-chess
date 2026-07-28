@@ -1,5 +1,6 @@
 #include "renderer.hpp"
 #include "../model/constants.hpp"
+#include <opencv2/imgproc.hpp>
 
 std::string Renderer::pieceCode(Color color, Kind kind) {
     std::string code;
@@ -53,7 +54,15 @@ void Renderer::drawPiece(Img& boardImg, const PieceSnapshot& piece,
     pieceImg.draw_on(boardImg, x, y);
 }
 
-void Renderer::render(const GameSnapshot& snapshot, ImageView& imageView, int elapsedMs) {
+
+static void drawHighlight(cv::Mat& boardMat, Position cell) {
+    int x = cell.col * CELL_SIZE;
+    int y = cell.row * CELL_SIZE;
+    cv::rectangle(boardMat, cv::Rect(x, y, CELL_SIZE, CELL_SIZE), cv::Scalar(0, 220, 0), 2);
+}
+
+int Renderer::render(const GameSnapshot& snapshot, ImageView& imageView, int elapsedMs,
+                      const std::vector<Position>& highlightedCells) {
     Img boardImg;
     boardImg.read(std::string(ASSETS_DIR) + "/board.png");
 
@@ -61,5 +70,9 @@ void Renderer::render(const GameSnapshot& snapshot, ImageView& imageView, int el
         drawPiece(boardImg, piece, imageView, elapsedMs);
     }
 
-    boardImg.show();
+    for (const Position& cell : highlightedCells) {
+        drawHighlight(boardImg.mat(), cell);
+    }
+
+    return boardImg.showFrame();
 }

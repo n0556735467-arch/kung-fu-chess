@@ -135,14 +135,14 @@ TEST_CASE("White pawn moves one row upward to empty cell") {
 
 TEST_CASE("White pawn can move two cells from its start row when path is clear") {
     Board board(8, 3);
-    board.addPiece(Piece(0, Color::White, Kind::Pawn, Position(7, 1)));
+    board.addPiece(Piece(0, Color::White, Kind::Pawn, Position(6, 1)));
 
     PawnRule rule;
-    auto dests = rule.legalDestinations(board, *board.pieceAt(Position(7, 1)));
+    auto dests = rule.legalDestinations(board, *board.pieceAt(Position(6, 1)));
 
     bool foundDouble = false;
     for (auto& p : dests) {
-        if (p == Position(5, 1)) foundDouble = true;
+        if (p == Position(4, 1)) foundDouble = true;
     }
     CHECK(foundDouble == true);
 }
@@ -253,4 +253,28 @@ TEST_CASE("Pawn cannot jump over a blocker for double move") {
     }
     CHECK(foundOne == false);
     CHECK(foundTwo == false);
+}
+
+TEST_CASE("getPieceRule routes Pawn to PawnRule, not King") {
+    Board board(8, 8);
+    board.addPiece(Piece(0, Color::White, Kind::Pawn, Position(6, 4)));
+
+    const Piece* pawn = board.pieceAt(Position(6, 4));
+    std::vector<Position> destinations = getPieceRule(Kind::Pawn).legalDestinations(board, *pawn);
+
+    bool hasSidewaysMove = false;
+    for (const Position& p : destinations) {
+        if (p.row == 6) {
+            hasSidewaysMove = true;
+        }
+    }
+    CHECK_FALSE(hasSidewaysMove);
+
+    bool hasTwoStep = false;
+    for (const Position& p : destinations) {
+        if (p == Position(4, 4)) {
+            hasTwoStep = true;
+        }
+    }
+    CHECK(hasTwoStep);
 }

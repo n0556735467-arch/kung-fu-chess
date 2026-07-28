@@ -1,6 +1,7 @@
 #ifndef RULE_ENGINE_HPP
 #define RULE_ENGINE_HPP
 #include <string>
+#include <vector>
 #include "../model/board.hpp"
 
 struct MoveValidation {
@@ -11,6 +12,7 @@ struct MoveValidation {
 class RuleEngine {
 public:
     MoveValidation validateMove(const Board& board, Position from, Position to) const;
+    std::vector<Position> legalDestinations(const Board& board, Position from) const;
 };
 
 #endif

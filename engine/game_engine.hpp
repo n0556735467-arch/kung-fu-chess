@@ -21,6 +21,8 @@ public:
     std::optional<Position> getLastMoveFrom() const;
     std::optional<Position> getLastMoveTo() const;
 
+    std::vector<Position> legalDestinationsFrom(Position from) const;
+
     GameSnapshot snapshot() const;
 
 private:

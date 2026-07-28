@@ -101,3 +101,15 @@ void Img::show() {
     cv::waitKey(0);
     cv::destroyAllWindows();
 } 
+
+int Img::showFrame(int delayMs) {
+    if (img.empty()) {
+        throw std::runtime_error("Image not loaded.");
+    }
+    cv::imshow("Image", img);
+    return cv::waitKey(delayMs);
+}
+
+cv::Mat& Img::mat() {
+    return img;
+}

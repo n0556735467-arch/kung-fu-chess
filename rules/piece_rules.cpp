@@ -84,6 +84,7 @@ const PieceRule& getPieceRule(Kind kind) {
     static QueenRule queen;
     static KnightRule knight;
     static KingRule king;
+    static PawnRule pawn;
 
     switch (kind) {
         case Kind::Rook:   return rook;
@@ -91,6 +92,7 @@ const PieceRule& getPieceRule(Kind kind) {
         case Kind::Queen:  return queen;
         case Kind::Knight: return knight;
         case Kind::King:   return king;
+        case Kind::Pawn:   return pawn;
         default:           return king; 
     }
 }
@@ -98,7 +100,7 @@ const PieceRule& getPieceRule(Kind kind) {
 std::vector<Position> PawnRule::legalDestinations(const Board& board, const Piece& piece) const {
     std::vector<Position> result;
     int dir = (piece.color == Color::White) ? -1 : 1;
-    int startRow = (piece.color == Color::White) ? board.rows - 1 : 0;
+    int startRow = (piece.color == Color::White) ? board.rows - 2 : 1;
 
     Position oneStep(piece.cell.row + dir, piece.cell.col);
     bool oneStepClear = board.isInBounds(oneStep) && board.pieceAt(oneStep) == nullptr;

@@ -10,8 +10,8 @@
 
 class Renderer {
 public:
-    void render(const GameSnapshot& snapshot, ImageView& imageView, int elapsedMs);
-
+    int render(const GameSnapshot& snapshot, ImageView& imageView, int elapsedMs,
+            const std::vector<Position>& highlightedCells = {});
 private:
     void drawPiece(Img& boardImg, const PieceSnapshot& piece,
                     ImageView& imageView, int elapsedMs);

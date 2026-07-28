@@ -38,3 +38,12 @@ MoveValidation RuleEngine::validateMove(const Board& board, Position from, Posit
     return MoveValidation{false, "illegal_piece_move"};
 }
 
+std::vector<Position> RuleEngine::legalDestinations(const Board& board, Position from) const {
+    const Piece* piece = board.pieceAt(from);
+    if (piece == nullptr) {
+        return {};
+    }
+    const PieceRule& rule = getPieceRule(piece->kind);
+    return rule.legalDestinations(board, *piece);
+}
+

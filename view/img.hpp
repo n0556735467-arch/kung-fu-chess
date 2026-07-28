@@ -50,6 +50,8 @@ public:
      */
     void show();
     
+    int showFrame(int delayMs = 1);
+
     /**
      * Get the underlying OpenCV Mat
      */
@@ -59,6 +61,8 @@ public:
      * Check if image is loaded
      */
     bool is_loaded() const { return !img.empty(); }
+
+    cv::Mat& mat();
 
 private:
     cv::Mat img;
