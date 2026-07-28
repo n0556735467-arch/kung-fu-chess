@@ -46,6 +46,9 @@ Board parseBoard(std::istream& input) {
         while (rowStream >> token) {
             col++;
         }
+        if (col == 0) {
+            continue;  
+        }
         if (expectedCols == -1) {
             expectedCols = col;
         } else if (col != expectedCols) {

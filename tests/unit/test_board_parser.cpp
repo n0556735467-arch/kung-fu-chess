@@ -55,3 +55,19 @@ TEST_CASE("Throws on unknown piece token") {
 
     CHECK_THROWS_AS(parseBoard(input), InvalidBoardException);
 }
+
+TEST_CASE("Skips leading and trailing blank lines") {
+    std::istringstream input(
+        "\n"
+        "wK . bR\n"
+        ". . .\n"
+        ". wN bK\n"
+        "\n"
+    );
+
+    Board b = parseBoard(input);
+
+    CHECK(b.rows == 3);
+    CHECK(b.cols == 3);
+    CHECK(b.getPieces().size() == 4);
+}
