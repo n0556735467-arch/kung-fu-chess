@@ -1,6 +1,7 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 #include "../../engine/game_engine.hpp"
+#include "../../model/constants.hpp"
 
 TEST_CASE("Snapshot reflects board dimensions and piece data") {
     Board board(3, 3);
@@ -27,4 +28,18 @@ TEST_CASE("Snapshot gameOver becomes true after king capture") {
 
     GameSnapshot snap = engine.snapshot();
     CHECK(snap.gameOver == true);
+}
+
+TEST_CASE("Snapshot includes motion progress for a moving piece") {
+    Board board(1, 3);
+    board.addPiece(Piece(0, Color::White, Kind::Rook, Position(0, 0)));
+
+    GameEngine engine(board);
+    engine.requestMove(Position(0, 0), Position(0, 2));
+    engine.wait(MOVE_DURATION_MS_PER_CELL);
+
+    GameSnapshot snap = engine.snapshot();
+    REQUIRE(snap.pieces.size() == 1);
+    REQUIRE(snap.pieces[0].motion.has_value());
+    CHECK(snap.pieces[0].motion->progress == doctest::Approx(0.5));
 }

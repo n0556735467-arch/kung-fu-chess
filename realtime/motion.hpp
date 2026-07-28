@@ -7,6 +7,7 @@ struct Motion {
     Position from;
     Position to;
     int remainingMs;
+    int totalMs;
 
     Motion(int pieceId, Position from, Position to, int durationMs);
 };

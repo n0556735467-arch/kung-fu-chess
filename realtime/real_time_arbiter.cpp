@@ -157,3 +157,15 @@ bool RealTimeArbiter::wait(int ms, Board& board) {
 
     return kingCaptured;
 }
+
+std::optional<MotionSnapshot> RealTimeArbiter::activeMotionFor(int pieceId) const {
+    for (const Motion& m : activeMotions) {
+        if (m.pieceId == pieceId) {
+            double progress = 1.0 - static_cast<double>(m.remainingMs) / static_cast<double>(m.totalMs);
+            if (progress < 0.0) progress = 0.0;
+            if (progress > 1.0) progress = 1.0;
+            return MotionSnapshot{m.from, m.to, progress};
+        }
+    }
+    return std::nullopt;
+}

@@ -1,8 +1,10 @@
 #ifndef GAME_SNAPSHOT_HPP
 #define GAME_SNAPSHOT_HPP
 #include <vector>
+#include <optional>
 #include "../model/piece.hpp"
 #include "../model/position.hpp"
+#include "../realtime/motion_snapshot.hpp"
 
 struct PieceSnapshot {
     int id;
@@ -10,6 +12,7 @@ struct PieceSnapshot {
     Kind kind;
     PieceState state;
     Position cell;
+    std::optional<MotionSnapshot> motion;
 };
 
 struct GameSnapshot {

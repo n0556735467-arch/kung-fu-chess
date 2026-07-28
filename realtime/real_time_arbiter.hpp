@@ -4,13 +4,16 @@
 #include "motion.hpp"
 #include "jump.hpp"
 #include "../model/board.hpp"
+#include <optional>
+#include "motion_snapshot.hpp"
 
 class RealTimeArbiter {
 public:
     bool startMotion(Position from, Position to, Board& board);
     bool startJump(Position at, Board& board);
     bool wait(int ms, Board& board);
-
+    std::optional<MotionSnapshot> activeMotionFor(int pieceId) const;
+    
 private:
     std::vector<Motion> activeMotions;
     std::vector<Jump> activeJumps;

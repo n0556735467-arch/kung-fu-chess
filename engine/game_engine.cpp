@@ -67,7 +67,8 @@ GameSnapshot GameEngine::snapshot() const {
     snap.gameOver = gameOver;
 
     for (const Piece& p : board.getPieces()) {
-        snap.pieces.push_back(PieceSnapshot{p.id, p.color, p.kind, p.state, p.cell});
+        PieceSnapshot ps{p.id, p.color, p.kind, p.state, p.cell, arbiter.activeMotionFor(p.id)};
+        snap.pieces.push_back(ps);
     }
 
     return snap;

@@ -135,3 +135,25 @@ TEST_CASE("A piece cannot capture a friendly piece that arrived first at the des
     CHECK(board.pieceAt(Position(0, 2))->id == 1);
     CHECK(board.pieceAt(Position(0, 0))->id == 0);
 }
+
+TEST_CASE("activeMotionFor reports progress as motion advances") {
+    Board board(1, 3);
+    board.addPiece(Piece(0, Color::White, Kind::Rook, Position(0, 0)));
+
+    RealTimeArbiter arbiter;
+    arbiter.startMotion(Position(0, 0), Position(0, 2), board);
+
+    auto midway = arbiter.activeMotionFor(0);
+    REQUIRE(midway.has_value());
+    CHECK(midway->progress == doctest::Approx(0.0));
+
+    arbiter.wait(MOVE_DURATION_MS_PER_CELL, board);
+
+    auto afterOneCell = arbiter.activeMotionFor(0);
+    REQUIRE(afterOneCell.has_value());
+    CHECK(afterOneCell->progress == doctest::Approx(0.5));
+
+    arbiter.wait(MOVE_DURATION_MS_PER_CELL, board);
+
+    CHECK_FALSE(arbiter.activeMotionFor(0).has_value());
+}
