@@ -33,6 +33,36 @@ const AnimationConfigProvider& Renderer::providerFor(const std::string& code) {
     return it->second;
 }
 
+
+
+
+static void drawHighlight(cv::Mat& boardMat, Position cell) {
+    int x = cell.col * CELL_SIZE;
+    int y = cell.row * CELL_SIZE;
+    cv::rectangle(boardMat, cv::Rect(x, y, CELL_SIZE, CELL_SIZE), cv::Scalar(0, 220, 0), 2);
+}
+
+
+Img& Renderer::cachedImage(const std::string& path, bool keepAspect) {
+    auto it = spriteCache.find(path);
+    if (it == spriteCache.end()) {
+        Img img;
+        if (keepAspect) {
+            img.read(path, {CELL_SIZE, CELL_SIZE}, true);
+        } else {
+            img.read(path);
+        }
+        it = spriteCache.emplace(path, std::move(img)).first;
+    }
+    return it->second;
+}
+
+static int interpolatePixel(int fromCell, int toCell, double progress) {
+    double fromPixel = fromCell * CELL_SIZE;
+    double toPixel = toCell * CELL_SIZE;
+    return static_cast<int>(fromPixel + (toPixel - fromPixel) * progress);
+}
+
 void Renderer::drawPiece(Img& boardImg, const PieceSnapshot& piece,
                           ImageView& imageView, int elapsedMs) {
     std::string code = pieceCode(piece.color, piece.kind);
@@ -46,25 +76,27 @@ void Renderer::drawPiece(Img& boardImg, const PieceSnapshot& piece,
     std::string path = std::string(ASSETS_DIR) + "/pieces_mine/" + code
         + "/states/" + stateName + "/sprites/" + std::to_string(frame + 1) + ".png";
 
-    Img pieceImg;
-    pieceImg.read(path, {CELL_SIZE, CELL_SIZE});
+    Img& pieceImg = cachedImage(path, true);
 
-    int x = piece.cell.col * CELL_SIZE;
-    int y = piece.cell.row * CELL_SIZE;
+    int x, y;
+    if (piece.motion.has_value()) {
+        x = interpolatePixel(piece.motion->from.col, piece.motion->to.col, piece.motion->progress);
+        y = interpolatePixel(piece.motion->from.row, piece.motion->to.row, piece.motion->progress);
+    } else {
+        x = piece.cell.col * CELL_SIZE;
+        y = piece.cell.row * CELL_SIZE;
+    }
+
     pieceImg.draw_on(boardImg, x, y);
 }
 
-
-static void drawHighlight(cv::Mat& boardMat, Position cell) {
-    int x = cell.col * CELL_SIZE;
-    int y = cell.row * CELL_SIZE;
-    cv::rectangle(boardMat, cv::Rect(x, y, CELL_SIZE, CELL_SIZE), cv::Scalar(0, 220, 0), 2);
-}
-
 int Renderer::render(const GameSnapshot& snapshot, ImageView& imageView, int elapsedMs,
-                      const std::vector<Position>& highlightedCells) {
+                      const std::vector<Position>& highlightedCells,
+                      const std::string& gameOverMessage) {
+    Img& boardTemplate = cachedImage(std::string(ASSETS_DIR) + "/board.png", false);
+
     Img boardImg;
-    boardImg.read(std::string(ASSETS_DIR) + "/board.png");
+    boardImg.mat() = boardTemplate.mat().clone();
 
     for (const PieceSnapshot& piece : snapshot.pieces) {
         drawPiece(boardImg, piece, imageView, elapsedMs);
@@ -74,5 +106,33 @@ int Renderer::render(const GameSnapshot& snapshot, ImageView& imageView, int ela
         drawHighlight(boardImg.mat(), cell);
     }
 
+
+    if (!gameOverMessage.empty()) {
+    cv::Mat& mat = boardImg.mat();
+
+    cv::Mat overlay = mat.clone();
+    cv::rectangle(overlay, cv::Rect(0, 0, mat.cols, mat.rows), cv::Scalar(0, 0, 0), cv::FILLED);
+    cv::addWeighted(overlay, 0.55, mat, 0.45, 0, mat);
+
+    cv::rectangle(mat, cv::Rect(30, 30, mat.cols - 60, mat.rows - 60), cv::Scalar(0, 200, 255), 4);
+
+    int titleFont = cv::FONT_HERSHEY_DUPLEX;
+    double titleScale = 2.6;
+    int titleThickness = 5;
+    int baseline = 0;
+    cv::Size titleSize = cv::getTextSize("GAME OVER", titleFont, titleScale, titleThickness, &baseline);
+    cv::Point titleOrigin((mat.cols - titleSize.width) / 2, mat.rows / 2 - 30);
+    cv::putText(mat, "GAME OVER", titleOrigin, titleFont, titleScale, cv::Scalar(255, 255, 255), titleThickness, cv::LINE_AA);
+
+    int subFont = cv::FONT_HERSHEY_DUPLEX;
+    double subScale = 1.6;
+    int subThickness = 3;
+    cv::Size subSize = cv::getTextSize(gameOverMessage, subFont, subScale, subThickness, &baseline);
+    cv::Point subOrigin((mat.cols - subSize.width) / 2, mat.rows / 2 + 60);
+    cv::putText(mat, gameOverMessage, subOrigin, subFont, subScale, cv::Scalar(0, 200, 255), subThickness, cv::LINE_AA);
+}
+
     return boardImg.showFrame();
 }
+
+

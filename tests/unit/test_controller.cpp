@@ -68,3 +68,27 @@ TEST_CASE("Second in-board click sends the correct source and destination and cl
     CHECK(engine.getLastMoveTo().value() == Position(1, 1));
     CHECK(controller.hasSelection() == false);
 }
+
+TEST_CASE("Right click on an occupied cell starts a jump") {
+    std::istringstream boardInput("wK . .\n. . .\n. . bK\n");
+    Board board = parseBoard(boardInput);
+    GameEngine engine(board);
+    Controller controller(engine);
+
+    controller.rightClick(50, 50);
+
+    const Piece* piece = engine.pieceAt(Position(0, 0));
+    REQUIRE(piece != nullptr);
+    CHECK(piece->state == PieceState::Airborne);
+}
+
+TEST_CASE("Right click on an empty cell does nothing") {
+    std::istringstream boardInput("wK . .\n. . .\n. . bK\n");
+    Board board = parseBoard(boardInput);
+    GameEngine engine(board);
+    Controller controller(engine);
+
+    controller.rightClick(150, 50);
+
+    CHECK(engine.pieceAt(Position(0, 1)) == nullptr);
+}

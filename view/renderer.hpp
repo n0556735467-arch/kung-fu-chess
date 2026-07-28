@@ -7,11 +7,14 @@
 #include "json_animation_config_provider.hpp"
 #include "../model/board.hpp"
 #include "../engine/game_snapshot.hpp"
+#include <unordered_map>
 
 class Renderer {
 public:
     int render(const GameSnapshot& snapshot, ImageView& imageView, int elapsedMs,
-            const std::vector<Position>& highlightedCells = {});
+           const std::vector<Position>& highlightedCells = {},
+           const std::string& gameOverMessage = "");
+           
 private:
     void drawPiece(Img& boardImg, const PieceSnapshot& piece,
                     ImageView& imageView, int elapsedMs);
@@ -22,6 +25,9 @@ private:
     static std::string triggeredStateFor(PieceState state);
 
     std::unordered_map<std::string, JsonAnimationConfigProvider> providers;
+    
+    std::unordered_map<std::string, Img> spriteCache;
+    Img& cachedImage(const std::string& path, bool keepAspect);
 };
 
 #endif

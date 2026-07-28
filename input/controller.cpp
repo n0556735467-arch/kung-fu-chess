@@ -12,6 +12,15 @@ Position Controller::selectedPosition() const {
     return selected.value();
 }
 
+void Controller::rightClick(int x, int y) {
+    const Board& board = engine.getBoard();
+    std::optional<Position> pos = pixelToCell(x, y, board.rows, board.cols);
+    if (!pos.has_value()) {
+        return;
+    }
+    engine.requestJump(pos.value());
+}
+
 void Controller::click(int x, int y) {
     const Board& board = engine.getBoard();
     std::optional<Position> pos = pixelToCell(x, y, board.rows, board.cols);

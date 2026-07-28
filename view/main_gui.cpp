@@ -11,11 +11,12 @@
 namespace {
 
 void onMouse(int event, int x, int y, int flags, void* userdata) {
-    if (event != cv::EVENT_LBUTTONDOWN) {
-        return;
-    }
     Controller* controller = static_cast<Controller*>(userdata);
-    controller->click(x, y);
+    if (event == cv::EVENT_LBUTTONDOWN) {
+        controller->click(x, y);
+    } else if (event == cv::EVENT_RBUTTONDOWN) {
+        controller->rightClick(x, y);
+    }
 }
 
 }
@@ -45,23 +46,41 @@ wR wN wB wQ wK wB wN wR
 
         auto lastFrameTime = std::chrono::steady_clock::now();
 
-        while (!engine.isGameOver()) {
-            auto now = std::chrono::steady_clock::now();
-            int elapsedMs = static_cast<int>(
-                std::chrono::duration_cast<std::chrono::milliseconds>(now - lastFrameTime).count());
-            lastFrameTime = now;
 
-            engine.wait(elapsedMs);
+        while (true) {
+    auto now = std::chrono::steady_clock::now();
+    int elapsedMs = static_cast<int>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(now - lastFrameTime).count());
+    lastFrameTime = now;
 
-                std::vector<Position> highlights;
-    if (controller.hasSelection()) {
+    if (!engine.isGameOver()) {
+        engine.wait(elapsedMs);
+    }
+
+    std::vector<Position> highlights;
+    if (controller.hasSelection() && !engine.isGameOver()) {
         highlights = engine.legalDestinationsFrom(controller.selectedPosition());
     }
-            int key = renderer.render(engine.snapshot(), imageView, elapsedMs, highlights);
-            if (key == 27) {
+
+    std::string gameOverMessage;
+    if (engine.isGameOver()) {
+        Color winner = Color::White;
+        for (const PieceSnapshot& p : engine.snapshot().pieces) {
+            if (p.kind == Kind::King) {
+                winner = p.color;
                 break;
             }
         }
+        gameOverMessage = (winner == Color::White) ? "WHITE WINS" : "BLACK WINS";
+    }
+
+    int key = renderer.render(engine.snapshot(), imageView, elapsedMs, highlights, gameOverMessage);
+    if (key == 27) {
+        break;
+    }
+}
+        
+
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;

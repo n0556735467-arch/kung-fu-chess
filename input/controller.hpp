@@ -11,6 +11,8 @@ public:
     bool hasSelection() const;
     Position selectedPosition() const;
 
+    void rightClick(int x, int y);
+
 private:
     GameEngine& engine;
     std::optional<Position> selected;
