@@ -92,47 +92,79 @@ void Renderer::drawPiece(Img& boardImg, const PieceSnapshot& piece,
 
 int Renderer::render(const GameSnapshot& snapshot, ImageView& imageView, int elapsedMs,
                       const std::vector<Position>& highlightedCells,
-                      const std::string& gameOverMessage) {
+                      const std::string& gameOverMessage,
+                      const std::string& whiteName,
+                      const std::string& blackName) {
     Img& boardTemplate = cachedImage(std::string(ASSETS_DIR) + "/board.png", false);
 
+    const int PANEL_WIDTH = 220;
+    cv::Mat canvas(boardTemplate.mat().rows, boardTemplate.mat().cols + PANEL_WIDTH,
+                   boardTemplate.mat().type(), cv::Scalar(30, 30, 30));
+    boardTemplate.mat().copyTo(canvas(cv::Rect(0, 0, boardTemplate.mat().cols, boardTemplate.mat().rows)));
+
     Img boardImg;
-    boardImg.mat() = boardTemplate.mat().clone();
+    boardImg.mat() = canvas;
+    cv::Mat& mat = boardImg.mat();
+
+    std::string whiteLabel = "White: " + whiteName + "  (" + std::to_string(snapshot.whiteScore) + ")";
+    cv::putText(mat, whiteLabel, cv::Point(10, 26),
+                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 0), 5, cv::LINE_AA);
+    cv::putText(mat, whiteLabel, cv::Point(10, 26),
+                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2, cv::LINE_AA);
+
+    int baseline = 0;
+    std::string blackLabel = "Black: " + blackName + "  (" + std::to_string(snapshot.blackScore) + ")";
+    cv::Size blackSize = cv::getTextSize(blackLabel, cv::FONT_HERSHEY_SIMPLEX, 0.7, 2, &baseline);
+    cv::Point blackOrigin(boardTemplate.mat().cols - blackSize.width - 10, 26);
+    cv::putText(mat, blackLabel, blackOrigin,
+                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 0), 5, cv::LINE_AA);
+    cv::putText(mat, blackLabel, blackOrigin,
+                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2, cv::LINE_AA);
 
     for (const PieceSnapshot& piece : snapshot.pieces) {
         drawPiece(boardImg, piece, imageView, elapsedMs);
     }
 
     for (const Position& cell : highlightedCells) {
-        drawHighlight(boardImg.mat(), cell);
+        drawHighlight(mat, cell);
     }
 
+    int panelX = boardTemplate.mat().cols + 10;
+    cv::putText(mat, "Moves", cv::Point(panelX, 20),
+                cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
+
+    int y = 45;
+    int startIndex = snapshot.moveLog.size() > 15 ? static_cast<int>(snapshot.moveLog.size()) - 15 : 0;
+    for (int i = startIndex; i < static_cast<int>(snapshot.moveLog.size()); i++) {
+        const MoveLogEntry& entry = snapshot.moveLog[i];
+        std::string line = std::to_string(entry.timeMs / 1000) + "s  " + entry.text;
+        cv::putText(mat, line, cv::Point(panelX, y),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.45, cv::Scalar(200, 200, 200), 1, cv::LINE_AA);
+        y += 20;
+    }
 
     if (!gameOverMessage.empty()) {
-    cv::Mat& mat = boardImg.mat();
+        cv::Mat overlay = mat.clone();
+        cv::rectangle(overlay, cv::Rect(0, 0, mat.cols, mat.rows), cv::Scalar(0, 0, 0), cv::FILLED);
+        cv::addWeighted(overlay, 0.55, mat, 0.45, 0, mat);
 
-    cv::Mat overlay = mat.clone();
-    cv::rectangle(overlay, cv::Rect(0, 0, mat.cols, mat.rows), cv::Scalar(0, 0, 0), cv::FILLED);
-    cv::addWeighted(overlay, 0.55, mat, 0.45, 0, mat);
+        cv::rectangle(mat, cv::Rect(30, 30, boardTemplate.mat().cols - 60, mat.rows - 60), cv::Scalar(0, 200, 255), 4);
 
-    cv::rectangle(mat, cv::Rect(30, 30, mat.cols - 60, mat.rows - 60), cv::Scalar(0, 200, 255), 4);
+        int titleFont = cv::FONT_HERSHEY_DUPLEX;
+        double titleScale = 2.2;
+        int titleThickness = 5;
+        cv::Size titleSize = cv::getTextSize("GAME OVER", titleFont, titleScale, titleThickness, &baseline);
+        cv::Point titleOrigin((boardTemplate.mat().cols - titleSize.width) / 2, mat.rows / 2 - 30);
+        cv::putText(mat, "GAME OVER", titleOrigin, titleFont, titleScale, cv::Scalar(255, 255, 255), titleThickness, cv::LINE_AA);
 
-    int titleFont = cv::FONT_HERSHEY_DUPLEX;
-    double titleScale = 2.6;
-    int titleThickness = 5;
-    int baseline = 0;
-    cv::Size titleSize = cv::getTextSize("GAME OVER", titleFont, titleScale, titleThickness, &baseline);
-    cv::Point titleOrigin((mat.cols - titleSize.width) / 2, mat.rows / 2 - 30);
-    cv::putText(mat, "GAME OVER", titleOrigin, titleFont, titleScale, cv::Scalar(255, 255, 255), titleThickness, cv::LINE_AA);
-
-    int subFont = cv::FONT_HERSHEY_DUPLEX;
-    double subScale = 1.6;
-    int subThickness = 3;
-    cv::Size subSize = cv::getTextSize(gameOverMessage, subFont, subScale, subThickness, &baseline);
-    cv::Point subOrigin((mat.cols - subSize.width) / 2, mat.rows / 2 + 60);
-    cv::putText(mat, gameOverMessage, subOrigin, subFont, subScale, cv::Scalar(0, 200, 255), subThickness, cv::LINE_AA);
-}
+        int subFont = cv::FONT_HERSHEY_DUPLEX;
+        double subScale = 1.4;
+        int subThickness = 3;
+        cv::Size subSize = cv::getTextSize(gameOverMessage, subFont, subScale, subThickness, &baseline);
+        cv::Point subOrigin((boardTemplate.mat().cols - subSize.width) / 2, mat.rows / 2 + 60);
+        cv::putText(mat, gameOverMessage, subOrigin, subFont, subScale, cv::Scalar(0, 200, 255), subThickness, cv::LINE_AA);
+    }
 
     return boardImg.showFrame();
 }
-
 

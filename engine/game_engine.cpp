@@ -113,7 +113,8 @@ GameSnapshot GameEngine::snapshot() const {
         PieceSnapshot ps{p.id, p.color, p.kind, p.state, p.cell, arbiter.activeMotionFor(p.id)};
         snap.pieces.push_back(ps);
     }
-
+    
+    snap.moveLog = moveLog;
     return snap;
 }
 

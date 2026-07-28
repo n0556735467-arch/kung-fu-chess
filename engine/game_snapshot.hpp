@@ -5,6 +5,7 @@
 #include "../model/piece.hpp"
 #include "../model/position.hpp"
 #include "../realtime/motion_snapshot.hpp"
+#include "move_log_entry.hpp"
 
 struct PieceSnapshot {
     int id;
@@ -20,6 +21,9 @@ struct GameSnapshot {
     int cols;
     std::vector<PieceSnapshot> pieces;
     bool gameOver;
+    int whiteScore;
+    int blackScore;
+    std::vector<MoveLogEntry> moveLog;
 };
 
 #endif
