@@ -105,22 +105,32 @@ bool RealTimeArbiter::wait(int ms, Board& board) {
                 Piece* moving = board.findPieceById(pieceId);
                 if (moving != nullptr) {
                     const Piece* captured = board.pieceAt(to);
+                    bool friendlyBlock = false;
+
                     if (captured != nullptr && captured->id != pieceId) {
-                        if (captured->kind == Kind::King) {
-                            kingCaptured = true;
+                        if (captured->color == moving->color) {
+                            friendlyBlock = true;
+                        } else {
+                            if (captured->kind == Kind::King) {
+                                kingCaptured = true;
+                            }
+                            board.removePiece(to);
                         }
-                        board.removePiece(to);
                     }
 
-                    moving = board.findPieceById(pieceId);
-                    if (moving != nullptr) {
-                        moving->cell = to;
+                    if (friendlyBlock) {
                         moving->state = PieceState::Idle;
+                    } else {
+                        moving = board.findPieceById(pieceId);
+                        if (moving != nullptr) {
+                            moving->cell = to;
+                            moving->state = PieceState::Idle;
 
-                        if (moving->kind == Kind::Pawn) {
-                            int lastRow = (moving->color == Color::White) ? 0 : board.rows - 1;
-                            if (moving->cell.row == lastRow) {
-                                moving->kind = Kind::Queen;
+                            if (moving->kind == Kind::Pawn) {
+                                int lastRow = (moving->color == Color::White) ? 0 : board.rows - 1;
+                                if (moving->cell.row == lastRow) {
+                                    moving->kind = Kind::Queen;
+                                }
                             }
                         }
                     }
@@ -133,18 +143,17 @@ bool RealTimeArbiter::wait(int ms, Board& board) {
         }
     }
 
-
     for (size_t i = 0; i < activeJumps.size();) {
-    if (activeJumps[i].remainingMs <= 0) {
-        Piece* p = board.findPieceById(activeJumps[i].pieceId);
-        if (p != nullptr) {
-            p->state = PieceState::Idle;
+        if (activeJumps[i].remainingMs <= 0) {
+            Piece* p = board.findPieceById(activeJumps[i].pieceId);
+            if (p != nullptr) {
+                p->state = PieceState::Idle;
+            }
+            activeJumps.erase(activeJumps.begin() + i);
+        } else {
+            i++;
         }
-        activeJumps.erase(activeJumps.begin() + i);
-    } else {
-        i++;
     }
-}
 
     return kingCaptured;
 }

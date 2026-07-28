@@ -3,6 +3,7 @@
 #include <sstream>
 #include "../../engine/game_engine.hpp"
 #include "../../io/board_parser.hpp"
+#include "../../MODEL/constants.hpp"
 
 TEST_CASE("Board does not change before motion completes") {
     std::istringstream boardInput("wR . .\n. . .\n. . .\n");
@@ -115,4 +116,22 @@ TEST_CASE("Piece state changes to Moving during motion and back to Idle on arriv
     const Piece* afterArrival = engine.getBoard().pieceAt(Position(0, 1));
     REQUIRE(afterArrival != nullptr);
     CHECK(afterArrival->state == PieceState::Idle);
+}
+
+TEST_CASE("A piece cannot capture a friendly piece that arrived first at the destination") {
+    Board board(1, 3);
+    board.addPiece(Piece(0, Color::White, Kind::Rook, Position(0, 0)));
+    board.addPiece(Piece(1, Color::White, Kind::King, Position(0, 1)));
+
+    RealTimeArbiter arbiter;
+
+    arbiter.startMotion(Position(0, 0), Position(0, 2), board);
+    arbiter.startMotion(Position(0, 1), Position(0, 2), board);
+
+    arbiter.wait(MOVE_DURATION_MS_PER_CELL, board);
+    CHECK(board.pieceAt(Position(0, 2))->id == 1);
+
+    arbiter.wait(MOVE_DURATION_MS_PER_CELL, board);
+    CHECK(board.pieceAt(Position(0, 2))->id == 1);
+    CHECK(board.pieceAt(Position(0, 0))->id == 0);
 }
