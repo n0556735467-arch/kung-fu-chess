@@ -4,6 +4,7 @@
 #include "../model/board.hpp"
 #include "../realtime/real_time_arbiter.hpp"
 #include "../rules/rule_engine.hpp"
+#include "game_snapshot.hpp"
 
 class GameEngine {
 public:
@@ -19,6 +20,8 @@ public:
 
     std::optional<Position> getLastMoveFrom() const;
     std::optional<Position> getLastMoveTo() const;
+
+    GameSnapshot snapshot() const;
 
 private:
     Board board;

@@ -30,8 +30,8 @@ std::string Renderer::spritePath(const Piece& piece) const {
     code += colorChar(piece.color);
     code += kindChar(piece.kind);
 
-    return R"(C:\Users\User\Desktop\kung-fu-chess\assets\pieces_mine\)"
-        + code + "\\states\\" + stateFolder(piece.state) + "\\sprites\\1.png";
+    return std::string(ASSETS_DIR) + "/pieces_mine/" + code
+        + "/states/" + stateFolder(piece.state) + "/sprites/1.png";
 }
 
 void Renderer::drawPiece(Img& boardImg, const Piece& piece) {
@@ -46,7 +46,7 @@ void Renderer::drawPiece(Img& boardImg, const Piece& piece) {
 
 void Renderer::render(const Board& board) {
     Img boardImg;
-    boardImg.read(R"(C:\Users\User\Desktop\kung-fu-chess\assets\board.png)");
+    boardImg.read(std::string(ASSETS_DIR) + "/board.png");
 
     for (const Piece& piece : board.getPieces()) {
         drawPiece(boardImg, piece);

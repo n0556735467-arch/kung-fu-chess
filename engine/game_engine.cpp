@@ -55,3 +55,16 @@ std::optional<Position> GameEngine::getLastMoveFrom() const {
 std::optional<Position> GameEngine::getLastMoveTo() const {
     return lastMoveTo;
 }
+
+GameSnapshot GameEngine::snapshot() const {
+    GameSnapshot snap;
+    snap.rows = board.rows;
+    snap.cols = board.cols;
+    snap.gameOver = gameOver;
+
+    for (const Piece& p : board.getPieces()) {
+        snap.pieces.push_back(PieceSnapshot{p.id, p.color, p.kind, p.state, p.cell});
+    }
+
+    return snap;
+}

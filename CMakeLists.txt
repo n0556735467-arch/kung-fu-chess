@@ -22,6 +22,10 @@ add_executable(${PROJECT_NAME}
     ${VIEW_SOURCES}
 )
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    ASSETS_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/assets\"
+)
+
 set(OPENCV_DIR "${CMAKE_CURRENT_SOURCE_DIR}/OpenCV_451")
 target_include_directories(${PROJECT_NAME} PRIVATE "${OPENCV_DIR}/include")
 target_link_directories(${PROJECT_NAME} PRIVATE "${OPENCV_DIR}/bin")
