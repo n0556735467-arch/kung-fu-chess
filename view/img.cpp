@@ -47,9 +47,7 @@ void Img::draw_on(Img& other_img, int x, int y) {
     if (source_img.channels() != target_img.channels()) {
         if (source_img.channels() == 3 && target_img.channels() == 4) {
             cv::cvtColor(source_img, source_img, cv::COLOR_BGR2BGRA);
-        } else if (source_img.channels() == 4 && target_img.channels() == 3) {
-            cv::cvtColor(source_img, source_img, cv::COLOR_BGRA2BGR);
-        }
+        } 
     }
 
     int h = source_img.rows;
@@ -63,14 +61,19 @@ void Img::draw_on(Img& other_img, int x, int y) {
 
     cv::Mat roi = target_img(cv::Rect(x, y, w, h));
 
-    if (source_img.channels() == 4) {
-        // Handle alpha blending for BGRA images
-        std::vector<cv::Mat> channels;
-        cv::split(source_img, channels);
-        cv::Mat alpha = channels[3] / 255.0;
-        
-        for (int c = 0; c < 3; ++c) {
-            roi.col(c) = (1.0 - alpha) * roi.col(c) + alpha * channels[c];
+    if (source_img.channels() == 4 && target_img.channels() >= 3) {        // Handle alpha blending for BGRA images
+        // Fixed pixel-by-pixel blending to prevent cv::gemm crash
+        for (int r = 0; r < h; ++r) {
+            for (int c = 0; c < w; ++c) {
+                double alpha = source_img.at<cv::Vec4b>(r, c)[3] / 255.0;
+                if (alpha == 0) continue;
+                cv::Vec3b& dst_pixel = roi.at<cv::Vec3b>(r, c);
+                cv::Vec4b src_pixel = source_img.at<cv::Vec4b>(r, c);
+
+                dst_pixel[0] = (1.0 - alpha) * dst_pixel[0] + alpha * src_pixel[0];
+                dst_pixel[1] = (1.0 - alpha) * dst_pixel[1] + alpha * src_pixel[1];
+                dst_pixel[2] = (1.0 - alpha) * dst_pixel[2] + alpha * src_pixel[2];
+            }
         }
     } else {
         // Direct copy for BGR images
