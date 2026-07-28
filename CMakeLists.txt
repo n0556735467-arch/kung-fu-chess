@@ -42,3 +42,29 @@ if(WIN32)
         $<$<CONFIG:Release>:${OPENCV_DIR}/bin/opencv_world451.dll>
         $<TARGET_FILE_DIR:${PROJECT_NAME}>)
 endif()
+
+# --- OpenCV-dependent unit tests (same MSVC/OpenCV toolchain as the GUI) ---
+add_executable(TestJsonAnimationConfigProvider
+    tests/unit/test_json_animation_config_provider.cpp
+    view/json_animation_config_provider.cpp
+)
+
+target_include_directories(TestJsonAnimationConfigProvider PRIVATE
+    "${OPENCV_DIR}/include"
+    tests/unit
+)
+
+target_link_directories(TestJsonAnimationConfigProvider PRIVATE "${OPENCV_DIR}/bin")
+
+target_link_libraries(TestJsonAnimationConfigProvider
+    $<$<CONFIG:Debug>:${OPENCV_DIR}/bin/opencv_world451d.lib>
+    $<$<CONFIG:Release>:${OPENCV_DIR}/bin/opencv_world451.lib>
+)
+
+if(WIN32)
+    add_custom_command(TARGET TestJsonAnimationConfigProvider POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<$<CONFIG:Debug>:${OPENCV_DIR}/bin/opencv_world451d.dll>
+        $<$<CONFIG:Release>:${OPENCV_DIR}/bin/opencv_world451.dll>
+        $<TARGET_FILE_DIR:TestJsonAnimationConfigProvider>)
+endif()
