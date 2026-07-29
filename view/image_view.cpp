@@ -15,6 +15,13 @@ void ImageView::update(int pieceId, const AnimationConfigProvider& provider,
         startState(pieceId, provider, triggeredState);
     } else if (isForceTrigger && it->second.stateName != triggeredState) {
         startState(pieceId, provider, triggeredState);
+    } else if (triggeredState == "idle" && it->second.stateName == "move") {
+        AnimationConfig moveCfg = provider.configFor("move");
+        if (!moveCfg.nextStateWhenFinished.empty()) {
+            startState(pieceId, provider, moveCfg.nextStateWhenFinished);
+        } else {
+            startState(pieceId, provider, "idle");
+        }
     }
 
     it = animations.find(pieceId);

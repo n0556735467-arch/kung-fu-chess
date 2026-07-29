@@ -41,6 +41,15 @@ wR wN wB wQ wK wB wN wR
         Renderer renderer;
         ImageView imageView;
 
+        std::string whiteName, blackName;
+std::cout << "Enter White player name: ";
+std::getline(std::cin, whiteName);
+std::cout << "Enter Black player name: ";
+std::getline(std::cin, blackName);
+
+if (whiteName.empty()) whiteName = "White";
+if (blackName.empty()) blackName = "Black";
+
         cv::namedWindow("Image");
         cv::setMouseCallback("Image", onMouse, &controller);
 
@@ -71,10 +80,11 @@ wR wN wB wQ wK wB wN wR
                 break;
             }
         }
-        gameOverMessage = (winner == Color::White) ? "WHITE WINS" : "BLACK WINS";
+    std::string winnerName = (winner == Color::White) ? whiteName : blackName;
+    gameOverMessage = winnerName + " WINS";
     }
 
-    int key = renderer.render(engine.snapshot(), imageView, elapsedMs, highlights, gameOverMessage);
+    int key = renderer.render(engine.snapshot(), imageView, elapsedMs, highlights, gameOverMessage, whiteName, blackName);
     if (key == 27) {
         break;
     }

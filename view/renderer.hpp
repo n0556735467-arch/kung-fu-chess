@@ -12,9 +12,11 @@
 class Renderer {
 public:
     int render(const GameSnapshot& snapshot, ImageView& imageView, int elapsedMs,
-           const std::vector<Position>& highlightedCells = {},
-           const std::string& gameOverMessage = "");
-           
+        const std::vector<Position>& highlightedCells = {},
+        const std::string& gameOverMessage = "",
+        const std::string& whiteName = "White",
+        const std::string& blackName = "Black");
+
 private:
     void drawPiece(Img& boardImg, const PieceSnapshot& piece,
                     ImageView& imageView, int elapsedMs);
