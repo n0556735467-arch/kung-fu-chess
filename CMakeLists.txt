@@ -68,3 +68,42 @@ if(WIN32)
         $<$<CONFIG:Release>:${OPENCV_DIR}/bin/opencv_world451.dll>
         $<TARGET_FILE_DIR:TestJsonAnimationConfigProvider>)
 endif()
+
+include(FetchContent)
+FetchContent_Declare(
+    ixwebsocket
+    GIT_REPOSITORY https://github.com/machinezone/IXWebSocket.git
+    GIT_TAG v11.4.5
+)
+set(USE_TLS OFF CACHE BOOL "" FORCE)
+
+set(USE_TLS OFF CACHE BOOL "" FORCE)
+set(USE_ZLIB OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(ixwebsocket)
+
+add_executable(EchoServer server/echo_server_main.cpp)
+target_link_libraries(EchoServer PRIVATE ixwebsocket)
+
+add_executable(EchoClient server/echo_client_main.cpp)
+target_link_libraries(EchoClient PRIVATE ixwebsocket)
+
+
+add_executable(ChessServer
+    server/chess_server_main.cpp
+    server/game_session.cpp
+    server/role_assigner.cpp
+    server/command_parser.cpp
+    server/bus.cpp
+    engine/game_engine.cpp
+    io/board_parser.cpp
+    io/board_printer.cpp
+    model/board.cpp
+    model/piece.cpp
+    model/position.cpp
+    rules/rule_engine.cpp
+    rules/piece_rules.cpp
+    realtime/real_time_arbiter.cpp
+    realtime/motion.cpp
+    realtime/jump.cpp
+)
+target_link_libraries(ChessServer PRIVATE ixwebsocket)
