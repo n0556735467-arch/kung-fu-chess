@@ -1,7 +1,6 @@
 #include "game_engine.hpp"
 
-GameEngine::GameEngine(Board board) : board(board) {
-}
+GameEngine::GameEngine(Board board, Bus* bus) : board(board), bus(bus) {}
 
 const Piece* GameEngine::pieceAt(Position pos) const {
     return board.pieceAt(pos);
@@ -36,6 +35,9 @@ if (moved != nullptr) {
     }
     std::string text = code + " " + squareName(from, board.rows) + "-" + squareName(to, board.rows);
     moveLog.push_back(MoveLogEntry{elapsedTotalMs, text});
+    if (bus != nullptr) {
+    bus->publish(BusEvent{EventType::MoveLogged, text});
+}
 }
 
 
@@ -68,6 +70,12 @@ void GameEngine::wait(int ms) {
     if (kingCaptured) {
         gameOver = true;
     }
+    if (kingCaptured) {
+    gameOver = true;
+    if (bus != nullptr) {
+        bus->publish(BusEvent{EventType::GameEnded, ""});
+    }
+}
         for (const CapturedPiece& cp : arbiter.consumeCaptures()) {
         int value = pieceValue(cp.kind);
         if (cp.color == Color::White) {
@@ -75,6 +83,13 @@ void GameEngine::wait(int ms) {
         } else {
             whiteScoreValue += value;
         }
+
+        if (bus != nullptr) {
+    std::string colorCode = (cp.color == Color::White ? "w" : "b");
+    bus->publish(BusEvent{EventType::PieceCaptured, colorCode});
+    bus->publish(BusEvent{EventType::ScoreUpdated,
+        std::to_string(whiteScoreValue) + "-" + std::to_string(blackScoreValue)});
+}
     }
 }
 

@@ -1,7 +1,35 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 #include "../../engine/game_engine.hpp"
+#include "../../server/bus.hpp"
 #include "../../model/constants.hpp"
+
+TEST_CASE("GameEngine publishes MoveLogged when a move is requested") {
+    Bus bus;
+    std::vector<std::string> received;
+    bus.subscribe(EventType::MoveLogged, [&received](const BusEvent& e) {
+        received.push_back(e.payload);
+    });
+
+    Board board(8, 8);
+    board.addPiece(Piece(0, Color::White, Kind::Pawn, Position(6, 4)));
+    GameEngine engine(board, &bus);
+
+    engine.requestMove(Position(6, 4), Position(4, 4));
+
+    REQUIRE(received.size() == 1);
+    CHECK(received[0] == "wP e2-e4");
+}
+
+TEST_CASE("GameEngine still works normally without a Bus") {
+    Board board(8, 8);
+    board.addPiece(Piece(0, Color::White, Kind::Pawn, Position(6, 4)));
+    GameEngine engine(board);
+
+    engine.requestMove(Position(6, 4), Position(4, 4));
+
+    CHECK(engine.getMoveLog().size() == 1);
+}
 
 TEST_CASE("Snapshot reflects board dimensions and piece data") {
     Board board(3, 3);

@@ -7,13 +7,14 @@
 #include "game_snapshot.hpp"
 #include <vector>
 #include "move_log_entry.hpp"
+#include "../server/bus.hpp"
 
 class GameEngine {
 public:
     int whiteScore() const;
     int blackScore() const;
     
-    GameEngine(Board board);
+    GameEngine(Board board, Bus* bus = nullptr);
 
     const Piece* pieceAt(Position pos) const;
     void requestMove(Position from, Position to);
@@ -48,6 +49,8 @@ private:
     int elapsedTotalMs = 0;
     std::vector<MoveLogEntry> moveLog;
     static std::string squareName(Position pos, int boardRows);
+
+    Bus* bus = nullptr;
 };
 
 #endif
