@@ -4,6 +4,8 @@
 #include <sstream>
 #include <unordered_map>
 #include <mutex>
+#include <thread>
+#include <chrono>
 
 #include "game_session.hpp"
 #include "bus.hpp"
@@ -30,12 +32,22 @@ wR wN wB wQ wK wB wN wR
     GameSession session(engine);
 
     std::mutex clientsMutex;
+    std::recursive_mutex engineMutex;
     std::unordered_map<std::string, ix::WebSocket*> clients;
+    std::string lastBroadcastText;
 
     auto broadcastBoard = [&]() {
         std::ostringstream out;
-        printBoard(engine.getBoard(), out);
+        {
+            std::lock_guard<std::recursive_mutex> lock(engineMutex);
+            printBoard(engine.getBoard(), out);
+        }
         std::string text = out.str();
+
+        if (text == lastBroadcastText) {
+            return;
+        }
+        lastBroadcastText = text;
 
         std::lock_guard<std::mutex> lock(clientsMutex);
         for (auto& pair : clients) {
@@ -67,11 +79,17 @@ wR wN wB wQ wK wB wN wR
                     std::lock_guard<std::mutex> lock(clientsMutex);
                     clients.erase(connectionId);
                 }
-                session.handleDisconnect(connectionId);
+                {
+                    std::lock_guard<std::recursive_mutex> lock(engineMutex);
+                    session.handleDisconnect(connectionId);
+                }
                 std::cout << "Client disconnected: " << connectionId << std::endl;
             } else if (msg->type == ix::WebSocketMessageType::Message) {
                 std::cout << "Received from " << connectionId << ": " << msg->str << std::endl;
-                session.handleCommand(connectionId, msg->str);
+                {
+                    std::lock_guard<std::recursive_mutex> lock(engineMutex);
+                    session.handleCommand(connectionId, msg->str);
+                }
             }
         }
     );
@@ -84,6 +102,26 @@ wR wN wB wQ wK wB wN wR
 
     server.start();
     std::cout << "Kung Fu Chess server running on ws://localhost:8080" << std::endl;
+
+    std::thread gameLoopThread([&]() {
+        auto lastTick = std::chrono::steady_clock::now();
+        while (true) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+            auto now = std::chrono::steady_clock::now();
+            int elapsedMs = static_cast<int>(
+                std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTick).count());
+            lastTick = now;
+
+            {
+                std::lock_guard<std::recursive_mutex> lock(engineMutex);
+                engine.wait(elapsedMs);
+            }
+            broadcastBoard();
+        }
+    });
+    gameLoopThread.detach();
+
     server.wait();
 
     ix::uninitNetSystem();
