@@ -1,99 +1,181 @@
 #include "../view/renderer.hpp"
 #include "../view/image_view.hpp"
-#include "../io/board_parser.hpp"
-#include "../engine/game_engine.hpp"
-#include "../input/controller.hpp"
+#include "../input/board_mapper.hpp"
+#include "../server/snapshot_codec.hpp"
+#include <ixwebsocket/IXWebSocket.h>
+#include <ixwebsocket/IXNetSystem.h>
 #include <opencv2/highgui.hpp>
-#include <sstream>
 #include <iostream>
 #include <chrono>
+#include <mutex>
+#include <optional>
 
 namespace {
 
+std::string pieceCode(Color color, Kind kind) {
+    std::string code;
+    code += (color == Color::White ? 'w' : 'b');
+    switch (kind) {
+        case Kind::King:   code += 'K'; break;
+        case Kind::Queen:  code += 'Q'; break;
+        case Kind::Rook:   code += 'R'; break;
+        case Kind::Bishop: code += 'B'; break;
+        case Kind::Knight: code += 'N'; break;
+        case Kind::Pawn:   code += 'P'; break;
+    }
+    return code;
+}
+
+std::string squareName(Position pos, int boardRows) {
+    char file = 'a' + pos.col;
+    int rank = boardRows - pos.row;
+    return std::string(1, file) + std::to_string(rank);
+}
+
+struct SharedState {
+    std::mutex mutex;
+    GameSnapshot snapshot;
+    bool hasSnapshot = false;
+};
+
+struct MouseState {
+    SharedState* shared;
+    ix::WebSocket* socket;
+    std::optional<Position> selected;
+};
+
 void onMouse(int event, int x, int y, int flags, void* userdata) {
-    Controller* controller = static_cast<Controller*>(userdata);
-    if (event == cv::EVENT_LBUTTONDOWN) {
-        controller->click(x, y);
-    } else if (event == cv::EVENT_RBUTTONDOWN) {
-        controller->rightClick(x, y);
+    if (event != cv::EVENT_LBUTTONDOWN) {
+        return;
     }
+    MouseState* state = static_cast<MouseState*>(userdata);
+
+    GameSnapshot snapshotCopy;
+    {
+        std::lock_guard<std::mutex> lock(state->shared->mutex);
+        if (!state->shared->hasSnapshot) {
+            return;
+        }
+        snapshotCopy = state->shared->snapshot;
+    }
+
+    std::optional<Position> clicked = pixelToCell(x, y, snapshotCopy.rows, snapshotCopy.cols);
+    if (!clicked.has_value()) {
+        state->selected.reset();
+        return;
+    }
+
+    const PieceSnapshot* clickedPiece = nullptr;
+    for (const PieceSnapshot& p : snapshotCopy.pieces) {
+        if (p.cell == clicked.value()) {
+            clickedPiece = &p;
+            break;
+        }
+    }
+
+    if (!state->selected.has_value()) {
+        if (clickedPiece != nullptr) {
+            state->selected = clicked;
+        }
+        return;
+    }
+
+    const PieceSnapshot* selectedPiece = nullptr;
+    for (const PieceSnapshot& p : snapshotCopy.pieces) {
+        if (p.cell == state->selected.value()) {
+            selectedPiece = &p;
+            break;
+        }
+    }
+
+    if (selectedPiece == nullptr) {
+        state->selected.reset();
+        return;
+    }
+
+    if (clickedPiece != nullptr && clickedPiece->color == selectedPiece->color) {
+        state->selected = clicked;
+        return;
+    }
+
+    std::string command = pieceCode(selectedPiece->color, selectedPiece->kind) + " "
+        + squareName(state->selected.value(), snapshotCopy.rows) + "-"
+        + squareName(clicked.value(), snapshotCopy.rows);
+
+    state->socket->send(command);
+    state->selected.reset();
 }
 
 }
 
-int main()
-{
-    try {
-        std::istringstream input(R"(bR bN bB bQ bK bB bN bR
-bP bP bP bP bP bP bP bP
-. . . . . . . .
-. . . . . . . .
-. . . . . . . .
-. . . . . . . .
-wP wP wP wP wP wP wP wP
-wR wN wB wQ wK wB wN wR
-)");
+int main() {
+    ix::initNetSystem();
 
-        Board board = parseBoard(input);
-        GameEngine engine(board);
-        Controller controller(engine);
+    std::string serverUrl = "ws://localhost:8080";
+    std::cout << "Connecting to " << serverUrl << " ..." << std::endl;
 
-        Renderer renderer;
-        ImageView imageView;
+    SharedState shared;
 
-        std::string whiteName, blackName;
-std::cout << "Enter White player name: ";
-std::getline(std::cin, whiteName);
-std::cout << "Enter Black player name: ";
-std::getline(std::cin, blackName);
+    ix::WebSocket socket;
+    socket.setUrl(serverUrl);
 
-if (whiteName.empty()) whiteName = "White";
-if (blackName.empty()) blackName = "Black";
+    socket.setOnMessageCallback([&shared](const ix::WebSocketMessagePtr& msg) {
+        if (msg->type == ix::WebSocketMessageType::Message) {
+            GameSnapshot decoded = decodeSnapshot(msg->str);
+            std::lock_guard<std::mutex> lock(shared.mutex);
+            shared.snapshot = decoded;
+            shared.hasSnapshot = true;
+        } else if (msg->type == ix::WebSocketMessageType::Open) {
+            std::cout << "Connected to server." << std::endl;
+        } else if (msg->type == ix::WebSocketMessageType::Error) {
+            std::cerr << "Connection error: " << msg->errorInfo.reason << std::endl;
+        }
+    });
 
-        cv::namedWindow("Image");
-        cv::setMouseCallback("Image", onMouse, &controller);
+    socket.start();
 
-        auto lastFrameTime = std::chrono::steady_clock::now();
+    MouseState mouseState;
+    mouseState.shared = &shared;
+    mouseState.socket = &socket;
 
+    Renderer renderer;
+    ImageView imageView;
 
-        while (true) {
-    auto now = std::chrono::steady_clock::now();
-    int elapsedMs = static_cast<int>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(now - lastFrameTime).count());
-    lastFrameTime = now;
+    cv::namedWindow("Image");
+    cv::setMouseCallback("Image", onMouse, &mouseState);
 
-    if (!engine.isGameOver()) {
-        engine.wait(elapsedMs);
-    }
+    auto lastFrameTime = std::chrono::steady_clock::now();
 
-    std::vector<Position> highlights;
-    if (controller.hasSelection() && !engine.isGameOver()) {
-        highlights = engine.legalDestinationsFrom(controller.selectedPosition());
-    }
+    while (true) {
+        auto now = std::chrono::steady_clock::now();
+        int elapsedMs = static_cast<int>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - lastFrameTime).count());
+        lastFrameTime = now;
 
-    std::string gameOverMessage;
-    if (engine.isGameOver()) {
-        Color winner = Color::White;
-        for (const PieceSnapshot& p : engine.snapshot().pieces) {
-            if (p.kind == Kind::King) {
-                winner = p.color;
-                break;
+        GameSnapshot snapshotCopy;
+        bool has = false;
+        {
+            std::lock_guard<std::mutex> lock(shared.mutex);
+            has = shared.hasSnapshot;
+            if (has) {
+                snapshotCopy = shared.snapshot;
             }
         }
-    std::string winnerName = (winner == Color::White) ? whiteName : blackName;
-    gameOverMessage = winnerName + " WINS";
+
+        if (!has) {
+            cv::waitKey(30);
+            continue;
+        }
+
+        std::string gameOverMessage = snapshotCopy.gameOver ? "GAME OVER" : "";
+
+        int key = renderer.render(snapshotCopy, imageView, elapsedMs, {}, gameOverMessage);
+        if (key == 27) {
+            break;
+        }
     }
 
-    int key = renderer.render(engine.snapshot(), imageView, elapsedMs, highlights, gameOverMessage, whiteName, blackName);
-    if (key == 27) {
-        break;
-    }
-}
-        
-
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return 1;
-    }
+    socket.stop();
+    ix::uninitNetSystem();
     return 0;
 }

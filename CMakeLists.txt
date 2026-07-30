@@ -20,6 +20,8 @@ add_executable(${PROJECT_NAME}
     ${REALTIME_SOURCES}
     ${RULES_SOURCES}
     ${VIEW_SOURCES}
+    server/bus.cpp
+    server/snapshot_codec.cpp
 )
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
@@ -33,6 +35,7 @@ target_link_directories(${PROJECT_NAME} PRIVATE "${OPENCV_DIR}/bin")
 target_link_libraries(${PROJECT_NAME}
     $<$<CONFIG:Debug>:${OPENCV_DIR}/bin/opencv_world451d.lib>
     $<$<CONFIG:Release>:${OPENCV_DIR}/bin/opencv_world451.lib>
+    ixwebsocket
 )
 
 if(WIN32)
