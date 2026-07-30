@@ -93,6 +93,7 @@ add_executable(ChessServer
     server/game_session.cpp
     server/role_assigner.cpp
     server/command_parser.cpp
+    server/snapshot_codec.cpp
     server/bus.cpp
     engine/game_engine.cpp
     io/board_parser.cpp

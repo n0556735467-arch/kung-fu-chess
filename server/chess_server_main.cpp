@@ -11,7 +11,7 @@
 #include "bus.hpp"
 #include "../engine/game_engine.hpp"
 #include "../io/board_parser.hpp"
-#include "../io/board_printer.hpp"
+#include "snapshot_codec.hpp"
 
 int main() {
     ix::initNetSystem();
@@ -37,12 +37,11 @@ wR wN wB wQ wK wB wN wR
     std::string lastBroadcastText;
 
     auto broadcastBoard = [&]() {
-        std::ostringstream out;
+        std::string text;
         {
             std::lock_guard<std::recursive_mutex> lock(engineMutex);
-            printBoard(engine.getBoard(), out);
+            text = encodeSnapshot(engine.snapshot());
         }
-        std::string text = out.str();
 
         if (text == lastBroadcastText) {
             return;
