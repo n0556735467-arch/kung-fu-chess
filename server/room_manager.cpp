@@ -14,3 +14,11 @@ std::string RoomManager::createRoom() {
 bool RoomManager::hasRoom(const std::string& roomId) const {
     return rooms.find(roomId) != rooms.end();
 }
+
+Room* RoomManager::getRoom(const std::string& roomId) {
+    auto it = rooms.find(roomId);
+    if (it == rooms.end()) {
+        return nullptr;
+    }
+    return it->second.get();
+}

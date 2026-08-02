@@ -93,6 +93,9 @@ target_link_libraries(EchoClient PRIVATE ixwebsocket)
 
 add_executable(ChessServer
     server/chess_server_main.cpp
+    server/room.cpp
+    server/room_manager.cpp
+    server/room_id_generator.cpp
     server/game_session.cpp
     server/role_assigner.cpp
     server/command_parser.cpp
@@ -101,7 +104,6 @@ add_executable(ChessServer
     server/bus.cpp
     engine/game_engine.cpp
     io/board_parser.cpp
-    io/board_printer.cpp
     model/board.cpp
     model/piece.cpp
     model/position.cpp
@@ -111,5 +113,4 @@ add_executable(ChessServer
     realtime/motion.cpp
     realtime/jump.cpp
 )
-    
 target_link_libraries(ChessServer PRIVATE ixwebsocket)

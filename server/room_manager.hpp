@@ -9,6 +9,7 @@ class RoomManager {
 public:
     std::string createRoom();
     bool hasRoom(const std::string& roomId) const;
+    Room* getRoom(const std::string& roomId);
 
 private:
     std::unordered_map<std::string, std::unique_ptr<Room>> rooms;

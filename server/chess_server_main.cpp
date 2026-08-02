@@ -1,85 +1,68 @@
 #include <ixwebsocket/IXWebSocketServer.h>
 #include <ixwebsocket/IXNetSystem.h>
 #include <iostream>
-#include <sstream>
 #include <unordered_map>
 #include <mutex>
 #include <thread>
 #include <chrono>
 
-#include "game_session.hpp"
+#include "room.hpp"
+#include "room_manager.hpp"
 #include "bus.hpp"
 #include "snapshot_codec.hpp"
-#include "../engine/game_engine.hpp"
-#include "../io/board_parser.hpp"
 
 int main() {
     ix::initNetSystem();
 
-    std::istringstream input(R"(bR bN bB bQ bK bB bN bR
-bP bP bP bP bP bP bP bP
-. . . . . . . .
-. . . . . . . .
-. . . . . . . .
-. . . . . . . .
-wP wP wP wP wP wP wP wP
-wR wN wB wQ wK wB wN wR
-)");
-    Board board = parseBoard(input);
-
-    Bus bus;
-    GameEngine engine(board, &bus);
-    GameSession session(engine);
+    RoomManager roomManager;
+    std::recursive_mutex roomsMutex;
 
     std::mutex clientsMutex;
-    std::recursive_mutex engineMutex;
     std::unordered_map<std::string, ix::WebSocket*> clients;
-    std::string lastBroadcastText;
-    std::string lastBroadcastNames;
+    std::unordered_map<std::string, std::string> connectionToRoom;
+    std::unordered_map<std::string, std::string> lastBroadcastText;
+    std::unordered_map<std::string, std::string> lastBroadcastNames;
 
-    auto broadcastNamesIfChanged = [&]() {
-        std::string namesText;
-        {
-            std::lock_guard<std::recursive_mutex> lock(engineMutex);
-            namesText = "NAMES " + session.getWhiteName() + "|" + session.getBlackName();
-        }
-        if (namesText == lastBroadcastNames) {
+    auto sendRoomState = [&](const std::string& roomId, ix::WebSocket& socket) {
+        Room* room = roomManager.getRoom(roomId);
+        if (room == nullptr) {
             return;
         }
-        lastBroadcastNames = namesText;
-
-        std::lock_guard<std::mutex> lock(clientsMutex);
-        for (auto& pair : clients) {
-            pair.second->send(namesText);
-        }
+        std::string text = encodeSnapshot(room->getEngine().snapshot());
+        socket.send(text);
     };
 
-    auto broadcastBoard = [&]() {
-        broadcastNamesIfChanged();
-
-        std::string text;
-        {
-            std::lock_guard<std::recursive_mutex> lock(engineMutex);
-            text = encodeSnapshot(engine.snapshot());
-        }
-
-        if (text == lastBroadcastText) {
+    auto broadcastRoom = [&](const std::string& roomId) {
+        Room* room = roomManager.getRoom(roomId);
+        if (room == nullptr) {
             return;
         }
-        lastBroadcastText = text;
+
+        std::string namesText = "NAMES " + room->getSession().getWhiteName() + "|"
+            + room->getSession().getBlackName();
+        if (lastBroadcastNames[roomId] != namesText) {
+            lastBroadcastNames[roomId] = namesText;
+            std::lock_guard<std::mutex> lock(clientsMutex);
+            for (auto& pair : connectionToRoom) {
+                if (pair.second == roomId && clients.count(pair.first)) {
+                    clients[pair.first]->send(namesText);
+                }
+            }
+        }
+
+        std::string text = encodeSnapshot(room->getEngine().snapshot());
+        if (lastBroadcastText[roomId] == text) {
+            return;
+        }
+        lastBroadcastText[roomId] = text;
 
         std::lock_guard<std::mutex> lock(clientsMutex);
-        for (auto& pair : clients) {
-            pair.second->send(text);
+        for (auto& pair : connectionToRoom) {
+            if (pair.second == roomId && clients.count(pair.first)) {
+                clients[pair.first]->send(text);
+            }
         }
     };
-
-    bus.subscribe(EventType::MoveLogged, [&broadcastBoard](const BusEvent&) {
-        broadcastBoard();
-    });
-    bus.subscribe(EventType::GameEnded, [&broadcastBoard](const BusEvent&) {
-        broadcastBoard();
-    });
 
     ix::WebSocketServer server(8080, "0.0.0.0");
 
@@ -90,44 +73,101 @@ wR wN wB wQ wK wB wN wR
             std::string connectionId = connectionState->getId();
 
             if (msg->type == ix::WebSocketMessageType::Open) {
-                ClientRole role;
-                std::string currentText;
-                std::string namesText;
-                {
-                    std::lock_guard<std::recursive_mutex> lock(engineMutex);
-                    role = session.getRole(connectionId);
-                    currentText = encodeSnapshot(engine.snapshot());
-                    namesText = "NAMES " + session.getWhiteName() + "|" + session.getBlackName();
-                }
-
-                std::string roleText = "ROLE ";
-                roleText += (role == ClientRole::White ? "White" :
-                             role == ClientRole::Black ? "Black" : "Observer");
-
-                webSocket.send(roleText);
-                webSocket.send(namesText);
-                webSocket.send(currentText);
-
                 std::lock_guard<std::mutex> lock(clientsMutex);
                 clients[connectionId] = &webSocket;
-                std::cout << "Client connected: " << connectionId << " as " << roleText << std::endl;
+                std::cout << "Client connected: " << connectionId << std::endl;
+
             } else if (msg->type == ix::WebSocketMessageType::Close) {
+                std::string roomId;
                 {
                     std::lock_guard<std::mutex> lock(clientsMutex);
                     clients.erase(connectionId);
+                    auto it = connectionToRoom.find(connectionId);
+                    if (it != connectionToRoom.end()) {
+                        roomId = it->second;
+                        connectionToRoom.erase(it);
+                    }
                 }
-                {
-                    std::lock_guard<std::recursive_mutex> lock(engineMutex);
-                    session.handleDisconnect(connectionId);
+                if (!roomId.empty()) {
+                    std::lock_guard<std::recursive_mutex> lock(roomsMutex);
+                    Room* room = roomManager.getRoom(roomId);
+                    if (room != nullptr) {
+                        room->getSession().handleDisconnect(connectionId);
+                    }
                 }
                 std::cout << "Client disconnected: " << connectionId << std::endl;
+
             } else if (msg->type == ix::WebSocketMessageType::Message) {
                 std::cout << "Received from " << connectionId << ": " << msg->str << std::endl;
-                {
-                    std::lock_guard<std::recursive_mutex> lock(engineMutex);
-                    session.handleCommand(connectionId, msg->str);
+
+                if (msg->str == "CREATE") {
+                    std::string roomId;
+                    {
+                        std::lock_guard<std::recursive_mutex> lock(roomsMutex);
+                        roomId = roomManager.createRoom();
+                    }
+                    {
+                        std::lock_guard<std::mutex> lock(clientsMutex);
+                        connectionToRoom[connectionId] = roomId;
+                    }
+                    webSocket.send("ROOMID " + roomId);
+
+                } else if (msg->str.rfind("JOIN ", 0) == 0) {
+                    std::string roomId = msg->str.substr(5);
+                    bool exists;
+                    {
+                        std::lock_guard<std::recursive_mutex> lock(roomsMutex);
+                        exists = roomManager.hasRoom(roomId);
+                    }
+                    if (!exists) {
+                        webSocket.send("ERROR Room not found");
+                        return;
+                    }
+                    {
+                        std::lock_guard<std::mutex> lock(clientsMutex);
+                        connectionToRoom[connectionId] = roomId;
+                    }
+                    webSocket.send("ROOMID " + roomId);
+
+                    Room* room = roomManager.getRoom(roomId);
+                    ClientRole role = room->getSession().getRole(connectionId);
+                    std::string roleText = "ROLE ";
+                    roleText += (role == ClientRole::White ? "White" :
+                                 role == ClientRole::Black ? "Black" : "Observer");
+                    webSocket.send(roleText);
+
+                    sendRoomState(roomId, webSocket);
+
+                } else {
+                    std::string roomId;
+                    {
+                        std::lock_guard<std::mutex> lock(clientsMutex);
+                        auto it = connectionToRoom.find(connectionId);
+                        if (it != connectionToRoom.end()) {
+                            roomId = it->second;
+                        }
+                    }
+                    if (roomId.empty()) {
+                        webSocket.send("ERROR Join or create a room first");
+                        return;
+                    }
+
+                    Room* room;
+                    {
+                        std::lock_guard<std::recursive_mutex> lock(roomsMutex);
+                        room = roomManager.getRoom(roomId);
+                    }
+                    if (room == nullptr) {
+                        return;
+                    }
+
+                    if (msg->str.rfind("LOGIN", 0) == 0) {
+                        room->getSession().handleCommand(connectionId, msg->str);
+                    } else {
+                        room->getSession().handleCommand(connectionId, msg->str);
+                    }
+                    broadcastRoom(roomId);
                 }
-                broadcastBoard();
             }
         }
     );
@@ -151,11 +191,23 @@ wR wN wB wQ wK wB wN wR
                 std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTick).count());
             lastTick = now;
 
+            std::vector<std::string> roomIds;
             {
-                std::lock_guard<std::recursive_mutex> lock(engineMutex);
-                engine.wait(elapsedMs);
+                std::lock_guard<std::mutex> lock(clientsMutex);
+                for (auto& pair : connectionToRoom) {
+                    roomIds.push_back(pair.second);
+                }
             }
-            broadcastBoard();
+
+            for (const std::string& roomId : roomIds) {
+                Room* room = roomManager.getRoom(roomId);
+                if (room != nullptr) {
+                    room->getEngine().wait(elapsedMs);
+                }
+            }
+            for (const std::string& roomId : roomIds) {
+                broadcastRoom(roomId);
+            }
         }
     });
     gameLoopThread.detach();
