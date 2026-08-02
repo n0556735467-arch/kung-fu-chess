@@ -252,14 +252,27 @@ int main() {
             highlights = localRuleEngine.legalDestinations(localBoard, mouseState.selected.value());
         }
 
-        std::string gameOverMessage = snapshotCopy.gameOver ? "GAME OVER" : "";
 
-        std::string whiteNameCopy, blackNameCopy;
-        {
-            std::lock_guard<std::mutex> lock(shared.mutex);
-            whiteNameCopy = shared.whiteName;
-            blackNameCopy = shared.blackName;
+        
+std::string whiteNameCopy, blackNameCopy;
+{
+    std::lock_guard<std::mutex> lock(shared.mutex);
+    whiteNameCopy = shared.whiteName;
+    blackNameCopy = shared.blackName;
+}
+
+std::string gameOverMessage;
+if (snapshotCopy.gameOver) {
+    Color winner = Color::White;
+    for (const PieceSnapshot& p : snapshotCopy.pieces) {
+        if (p.kind == Kind::King) {
+            winner = p.color;
+            break;
         }
+    }
+    std::string winnerName = (winner == Color::White) ? whiteNameCopy : blackNameCopy;
+    gameOverMessage = winnerName + " WINS";
+}
 
         int key = renderer.render(snapshotCopy, imageView, elapsedMs, highlights, gameOverMessage,
                                   whiteNameCopy, blackNameCopy, selectedCellForRender);
