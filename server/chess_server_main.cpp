@@ -9,9 +9,9 @@
 
 #include "game_session.hpp"
 #include "bus.hpp"
+#include "snapshot_codec.hpp"
 #include "../engine/game_engine.hpp"
 #include "../io/board_parser.hpp"
-#include "snapshot_codec.hpp"
 
 int main() {
     ix::initNetSystem();
@@ -35,8 +35,28 @@ wR wN wB wQ wK wB wN wR
     std::recursive_mutex engineMutex;
     std::unordered_map<std::string, ix::WebSocket*> clients;
     std::string lastBroadcastText;
+    std::string lastBroadcastNames;
+
+    auto broadcastNamesIfChanged = [&]() {
+        std::string namesText;
+        {
+            std::lock_guard<std::recursive_mutex> lock(engineMutex);
+            namesText = "NAMES " + session.getWhiteName() + "|" + session.getBlackName();
+        }
+        if (namesText == lastBroadcastNames) {
+            return;
+        }
+        lastBroadcastNames = namesText;
+
+        std::lock_guard<std::mutex> lock(clientsMutex);
+        for (auto& pair : clients) {
+            pair.second->send(namesText);
+        }
+    };
 
     auto broadcastBoard = [&]() {
+        broadcastNamesIfChanged();
+
         std::string text;
         {
             std::lock_guard<std::recursive_mutex> lock(engineMutex);
@@ -70,9 +90,27 @@ wR wN wB wQ wK wB wN wR
             std::string connectionId = connectionState->getId();
 
             if (msg->type == ix::WebSocketMessageType::Open) {
+                ClientRole role;
+                std::string currentText;
+                std::string namesText;
+                {
+                    std::lock_guard<std::recursive_mutex> lock(engineMutex);
+                    role = session.getRole(connectionId);
+                    currentText = encodeSnapshot(engine.snapshot());
+                    namesText = "NAMES " + session.getWhiteName() + "|" + session.getBlackName();
+                }
+
+                std::string roleText = "ROLE ";
+                roleText += (role == ClientRole::White ? "White" :
+                             role == ClientRole::Black ? "Black" : "Observer");
+
+                webSocket.send(roleText);
+                webSocket.send(namesText);
+                webSocket.send(currentText);
+
                 std::lock_guard<std::mutex> lock(clientsMutex);
                 clients[connectionId] = &webSocket;
-                std::cout << "Client connected: " << connectionId << std::endl;
+                std::cout << "Client connected: " << connectionId << " as " << roleText << std::endl;
             } else if (msg->type == ix::WebSocketMessageType::Close) {
                 {
                     std::lock_guard<std::mutex> lock(clientsMutex);
@@ -89,6 +127,7 @@ wR wN wB wQ wK wB wN wR
                     std::lock_guard<std::recursive_mutex> lock(engineMutex);
                     session.handleCommand(connectionId, msg->str);
                 }
+                broadcastBoard();
             }
         }
     );

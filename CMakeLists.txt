@@ -97,6 +97,7 @@ add_executable(ChessServer
     server/role_assigner.cpp
     server/command_parser.cpp
     server/snapshot_codec.cpp
+    server/player_registry.cpp
     server/bus.cpp
     engine/game_engine.cpp
     io/board_parser.cpp
@@ -110,4 +111,5 @@ add_executable(ChessServer
     realtime/motion.cpp
     realtime/jump.cpp
 )
+    
 target_link_libraries(ChessServer PRIVATE ixwebsocket)
