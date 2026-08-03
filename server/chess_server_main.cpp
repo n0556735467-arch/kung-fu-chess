@@ -32,6 +32,25 @@ int main() {
         socket.send(text);
     };
 
+    auto sendJoinPackage = [&](const std::string& roomId, const std::string& connectionId, ix::WebSocket& socket) {
+        Room* room = roomManager.getRoom(roomId);
+        if (room == nullptr) {
+            return;
+        }
+
+        ClientRole role = room->getSession().getRole(connectionId);
+        std::string roleText = "ROLE ";
+        roleText += (role == ClientRole::White ? "White" :
+                     role == ClientRole::Black ? "Black" : "Observer");
+        socket.send(roleText);
+
+        std::string namesText = "NAMES " + room->getSession().getWhiteName() + "|"
+            + room->getSession().getBlackName();
+        socket.send(namesText);
+
+        sendRoomState(roomId, socket);
+    };
+
     auto broadcastRoom = [&](const std::string& roomId) {
         Room* room = roomManager.getRoom(roomId);
         if (room == nullptr) {
@@ -79,6 +98,7 @@ int main() {
 
             } else if (msg->type == ix::WebSocketMessageType::Close) {
                 std::string roomId;
+                ClientRole disconnectedRole = ClientRole::Observer;
                 {
                     std::lock_guard<std::mutex> lock(clientsMutex);
                     clients.erase(connectionId);
@@ -92,11 +112,26 @@ int main() {
                     std::lock_guard<std::recursive_mutex> lock(roomsMutex);
                     Room* room = roomManager.getRoom(roomId);
                     if (room != nullptr) {
+                        disconnectedRole = room->getSession().getRole(connectionId);
                         room->getSession().handleDisconnect(connectionId);
                     }
                 }
                 std::cout << "Client disconnected: " << connectionId << std::endl;
+                if (disconnectedRole == ClientRole::White || disconnectedRole == ClientRole::Black) {
+        std::string capturedRoomId = roomId;
+        Color resigningColor = (disconnectedRole == ClientRole::White) ? Color::White : Color::Black;
 
+        std::thread([&roomManager, &roomsMutex, capturedRoomId, resigningColor, broadcastRoom]() {
+            std::this_thread::sleep_for(std::chrono::seconds(20));
+
+            std::lock_guard<std::recursive_mutex> lock(roomsMutex);
+            Room* room = roomManager.getRoom(capturedRoomId);
+            if (room != nullptr && !room->getEngine().isGameOver()) {
+                room->getEngine().resign(resigningColor);
+                broadcastRoom(capturedRoomId);
+            }
+        }).detach();
+    }
             } else if (msg->type == ix::WebSocketMessageType::Message) {
                 std::cout << "Received from " << connectionId << ": " << msg->str << std::endl;
 
@@ -111,18 +146,7 @@ int main() {
                         connectionToRoom[connectionId] = roomId;
                     }
                     webSocket.send("ROOMID " + roomId);
-
-                        Room* room = roomManager.getRoom(roomId);
-    ClientRole role = room->getSession().getRole(connectionId);
-    std::string roleText = "ROLE ";
-    roleText += (role == ClientRole::White ? "White" :
-                 role == ClientRole::Black ? "Black" : "Observer");
-    webSocket.send(roleText);
-    std::string namesText = "NAMES " + room->getSession().getWhiteName() + "|"
-    + room->getSession().getBlackName();
-    webSocket.send(namesText);
-
-    sendRoomState(roomId, webSocket);
+                    sendJoinPackage(roomId, connectionId, webSocket);
 
                 } else if (msg->str.rfind("JOIN ", 0) == 0) {
                     std::string roomId = msg->str.substr(5);
@@ -140,18 +164,7 @@ int main() {
                         connectionToRoom[connectionId] = roomId;
                     }
                     webSocket.send("ROOMID " + roomId);
-
-                    Room* room = roomManager.getRoom(roomId);
-                    ClientRole role = room->getSession().getRole(connectionId);
-                    std::string roleText = "ROLE ";
-                    roleText += (role == ClientRole::White ? "White" :
-                                 role == ClientRole::Black ? "Black" : "Observer");
-                    webSocket.send(roleText);
-                    std::string namesText = "NAMES " + room->getSession().getWhiteName() + "|"
-                        + room->getSession().getBlackName();
-                    webSocket.send(namesText);
-
-                    sendRoomState(roomId, webSocket);
+                    sendJoinPackage(roomId, connectionId, webSocket);
 
                 } else {
                     std::string roomId;
@@ -176,11 +189,7 @@ int main() {
                         return;
                     }
 
-                    if (msg->str.rfind("LOGIN", 0) == 0) {
-                        room->getSession().handleCommand(connectionId, msg->str);
-                    } else {
-                        room->getSession().handleCommand(connectionId, msg->str);
-                    }
+                    room->getSession().handleCommand(connectionId, msg->str);
                     broadcastRoom(roomId);
                 }
             }
