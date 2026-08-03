@@ -1,4 +1,5 @@
 #include "game_engine.hpp"
+#include <optional>
 
 GameEngine::GameEngine(Board board, Bus* bus) : board(board), bus(bus) {}
 
@@ -66,12 +67,11 @@ int GameEngine::pieceValue(Kind kind) {
 
 void GameEngine::wait(int ms) {
     elapsedTotalMs += ms;
-    bool kingCaptured = arbiter.wait(ms, board);
-    if (kingCaptured) {
-        gameOver = true;
-    }
-    if (kingCaptured) {
+
+    std::optional<Color> capturedKing = arbiter.wait(ms, board);
+    if (capturedKing.has_value()) {
     gameOver = true;
+    winner = (capturedKing.value() == Color::White) ? Color::Black : Color::White;
     if (bus != nullptr) {
         bus->publish(BusEvent{EventType::GameEnded, ""});
     }
@@ -141,4 +141,21 @@ std::string GameEngine::squareName(Position pos, int boardRows) {
 
 const std::vector<MoveLogEntry>& GameEngine::getMoveLog() const {
     return moveLog;
+}
+
+
+void GameEngine::resign(Color resigningColor) {
+    if (gameOver) {
+        return;
+    }
+    gameOver = true;
+    winner = (resigningColor == Color::White) ? Color::Black : Color::White;
+
+    if (bus != nullptr) {
+        bus->publish(BusEvent{EventType::GameEnded, ""});
+    }
+}
+
+std::optional<Color> GameEngine::getWinner() const {
+    return winner;
 }

@@ -8,6 +8,7 @@
 #include <vector>
 #include "move_log_entry.hpp"
 #include "../server/bus.hpp"
+#include <optional>
 
 class GameEngine {
 public:
@@ -34,6 +35,9 @@ public:
 
     GameSnapshot snapshot() const;
 
+    std::optional<Color> getWinner() const;
+    void resign(Color resigningColor);
+
 private:
     int whiteScoreValue = 0;
     int blackScoreValue = 0;
@@ -51,6 +55,8 @@ private:
     static std::string squareName(Position pos, int boardRows);
 
     Bus* bus = nullptr;
+
+    std::optional<Color> winner;
 };
 
 #endif

@@ -98,3 +98,72 @@ TEST_CASE("Move log records each move with elapsed time and square names") {
     CHECK(log[0].timeMs == 500);
     CHECK(log[0].text == "wP e2-e4");
 }
+
+TEST_CASE("resign ends the game in favor of the other color") {
+    Board board(8, 8);
+    board.addPiece(Piece(0, Color::White, Kind::King, Position(0, 0)));
+    board.addPiece(Piece(1, Color::Black, Kind::King, Position(7, 7)));
+
+    GameEngine engine(board);
+    engine.resign(Color::White);
+
+    CHECK(engine.isGameOver());
+    const Piece* remainingKing = nullptr;
+    for (const Piece& p : engine.getBoard().getPieces()) {
+        if (p.kind == Kind::King) {
+            remainingKing = &p;
+        }
+    }
+    REQUIRE(remainingKing != nullptr);
+    CHECK(remainingKing->color == Color::Black);
+}
+
+TEST_CASE("resign after game already ended does nothing") {
+    Board board(8, 8);
+    board.addPiece(Piece(0, Color::White, Kind::King, Position(0, 0)));
+    board.addPiece(Piece(1, Color::Black, Kind::King, Position(7, 7)));
+
+    GameEngine engine(board);
+    engine.resign(Color::White);
+    engine.resign(Color::Black);
+
+    CHECK(engine.isGameOver());
+}
+
+TEST_CASE("resign ends the game with the other color as winner") {
+    Board board(8, 8);
+    board.addPiece(Piece(0, Color::White, Kind::King, Position(0, 0)));
+    board.addPiece(Piece(1, Color::Black, Kind::King, Position(7, 7)));
+
+    GameEngine engine(board);
+    engine.resign(Color::White);
+
+    CHECK(engine.isGameOver());
+    REQUIRE(engine.getWinner().has_value());
+    CHECK(engine.getWinner().value() == Color::Black);
+}
+
+TEST_CASE("King capture sets the winner correctly") {
+    Board board(1, 3);
+    board.addPiece(Piece(0, Color::White, Kind::Rook, Position(0, 0)));
+    board.addPiece(Piece(1, Color::Black, Kind::King, Position(0, 2)));
+
+    GameEngine engine(board);
+    engine.requestMove(Position(0, 0), Position(0, 2));
+    engine.wait(2 * MOVE_DURATION_MS_PER_CELL);
+
+    REQUIRE(engine.getWinner().has_value());
+    CHECK(engine.getWinner().value() == Color::White);
+}
+
+TEST_CASE("resign after game already ended does not change the winner") {
+    Board board(8, 8);
+    board.addPiece(Piece(0, Color::White, Kind::King, Position(0, 0)));
+    board.addPiece(Piece(1, Color::Black, Kind::King, Position(7, 7)));
+
+    GameEngine engine(board);
+    engine.resign(Color::White);
+    engine.resign(Color::Black);
+
+    CHECK(engine.getWinner().value() == Color::Black);
+}

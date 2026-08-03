@@ -68,8 +68,8 @@ bool RealTimeArbiter::startJump(Position at, Board& board) {
     return true;
 }
 
-bool RealTimeArbiter::wait(int ms, Board& board) {
-    bool kingCaptured = false;
+std::optional<Color> RealTimeArbiter::wait(int ms, Board& board) {
+    std::optional<Color> capturedKingColor = std::nullopt;
 
     for (Motion& m : activeMotions) {
         m.remainingMs -= ms;
@@ -116,7 +116,7 @@ bool RealTimeArbiter::wait(int ms, Board& board) {
                             friendlyBlock = true;
                         } else {
                             if (captured->kind == Kind::King) {
-                                kingCaptured = true;
+                                capturedKingColor = captured->color;
                             }
                             pendingCaptures.push_back(CapturedPiece{captured->color, captured->kind});
                             board.removePiece(to);
@@ -160,7 +160,7 @@ bool RealTimeArbiter::wait(int ms, Board& board) {
         }
     }
 
-    return kingCaptured;
+    return capturedKingColor;
 }
 
 std::optional<MotionSnapshot> RealTimeArbiter::activeMotionFor(int pieceId) const {

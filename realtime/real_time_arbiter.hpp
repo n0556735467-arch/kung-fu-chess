@@ -12,8 +12,7 @@ class RealTimeArbiter {
 public:
     bool startMotion(Position from, Position to, Board& board);
     bool startJump(Position at, Board& board);
-    bool wait(int ms, Board& board);
-    std::optional<MotionSnapshot> activeMotionFor(int pieceId) const;
+    std::optional<Color> wait(int ms, Board& board);    std::optional<MotionSnapshot> activeMotionFor(int pieceId) const;
     std::vector<CapturedPiece> consumeCaptures();
 
 private:
