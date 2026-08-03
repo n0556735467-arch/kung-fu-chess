@@ -112,6 +112,15 @@ int main() {
                     }
                     webSocket.send("ROOMID " + roomId);
 
+                        Room* room = roomManager.getRoom(roomId);
+    ClientRole role = room->getSession().getRole(connectionId);
+    std::string roleText = "ROLE ";
+    roleText += (role == ClientRole::White ? "White" :
+                 role == ClientRole::Black ? "Black" : "Observer");
+    webSocket.send(roleText);
+
+    sendRoomState(roomId, webSocket);
+    
                 } else if (msg->str.rfind("JOIN ", 0) == 0) {
                     std::string roomId = msg->str.substr(5);
                     bool exists;

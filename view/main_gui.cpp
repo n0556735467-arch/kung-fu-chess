@@ -13,6 +13,8 @@
 #include <optional>
 #include <atomic>
 #include <thread>
+#include <sstream>
+#include <cctype>
 
 namespace {
 
@@ -158,39 +160,46 @@ int main() {
 
     SharedState shared;
     std::atomic<bool> connected{false};
-
+    std::atomic<bool> gotRoomId{false};
+    
     ix::WebSocket socket;
     socket.setUrl(serverUrl);
 
-    socket.setOnMessageCallback([&shared, &connected](const ix::WebSocketMessagePtr& msg) {
-        if (msg->type == ix::WebSocketMessageType::Message) {
-            if (msg->str.rfind("ROLE ", 0) == 0) {
-                std::string roleStr = msg->str.substr(5);
+    socket.setOnMessageCallback([&shared, &connected, &gotRoomId](const ix::WebSocketMessagePtr& msg) {
+    if (msg->type == ix::WebSocketMessageType::Message) {
+        if (msg->str.rfind("ROOMID ", 0) == 0) {
+            std::string roomId = msg->str.substr(7);
+            std::cout << "Room id: " << roomId << " (share this with the other player)" << std::endl;
+            gotRoomId = true;
+        } else if (msg->str.rfind("ERROR ", 0) == 0) {
+            std::cerr << msg->str << std::endl;
+        } else if (msg->str.rfind("ROLE ", 0) == 0) {
+            std::string roleStr = msg->str.substr(5);
+            std::lock_guard<std::mutex> lock(shared.mutex);
+            if (roleStr == "White") shared.role = ClientRole::White;
+            else if (roleStr == "Black") shared.role = ClientRole::Black;
+            else shared.role = ClientRole::Observer;
+        } else if (msg->str.rfind("NAMES ", 0) == 0) {
+            std::string namesStr = msg->str.substr(6);
+            size_t sep = namesStr.find('|');
+            if (sep != std::string::npos) {
                 std::lock_guard<std::mutex> lock(shared.mutex);
-                if (roleStr == "White") shared.role = ClientRole::White;
-                else if (roleStr == "Black") shared.role = ClientRole::Black;
-                else shared.role = ClientRole::Observer;
-            } else if (msg->str.rfind("NAMES ", 0) == 0) {
-                std::string namesStr = msg->str.substr(6);
-                size_t sep = namesStr.find('|');
-                if (sep != std::string::npos) {
-                    std::lock_guard<std::mutex> lock(shared.mutex);
-                    shared.whiteName = namesStr.substr(0, sep);
-                    shared.blackName = namesStr.substr(sep + 1);
-                }
-            } else {
-                GameSnapshot decoded = decodeSnapshot(msg->str);
-                std::lock_guard<std::mutex> lock(shared.mutex);
-                shared.snapshot = decoded;
-                shared.hasSnapshot = true;
+                shared.whiteName = namesStr.substr(0, sep);
+                shared.blackName = namesStr.substr(sep + 1);
             }
-        } else if (msg->type == ix::WebSocketMessageType::Open) {
-            std::cout << "Connected to server." << std::endl;
-            connected = true;
-        } else if (msg->type == ix::WebSocketMessageType::Error) {
-            std::cerr << "Connection error: " << msg->errorInfo.reason << std::endl;
+        } else {
+            GameSnapshot decoded = decodeSnapshot(msg->str);
+            std::lock_guard<std::mutex> lock(shared.mutex);
+            shared.snapshot = decoded;
+            shared.hasSnapshot = true;
         }
-    });
+    } else if (msg->type == ix::WebSocketMessageType::Open) {
+        std::cout << "Connected to server." << std::endl;
+        connected = true;
+    } else if (msg->type == ix::WebSocketMessageType::Error) {
+        std::cerr << "Connection error: " << msg->errorInfo.reason << std::endl;
+    }
+});
 
     socket.start();
 
@@ -198,6 +207,30 @@ int main() {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
+    std::cout << "Create a new room or join one? (create/join): ";
+    std::string choiceLine;
+    std::getline(std::cin, choiceLine);
+
+    std::istringstream choiceStream(choiceLine);
+std::string command;
+choiceStream >> command;
+for (char& c : command) {
+    c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+}
+
+    if (choiceLine == "join") {
+        std::string roomId;
+        if (!(choiceStream >> roomId)) {
+            std::cout << "Enter room id: ";
+            std::getline(std::cin, roomId);
+        }
+    socket.send("JOIN " + roomId);
+} else {
+    socket.send("CREATE");
+}
+    while (!gotRoomId) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
     std::string playerName;
     std::cout << "Enter your name: ";
     std::getline(std::cin, playerName);
