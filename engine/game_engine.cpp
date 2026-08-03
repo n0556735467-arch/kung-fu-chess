@@ -130,6 +130,7 @@ GameSnapshot GameEngine::snapshot() const {
     }
     
     snap.moveLog = moveLog;
+    snap.winner = winner;
     return snap;
 }
 

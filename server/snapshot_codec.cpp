@@ -49,6 +49,7 @@ std::string encodeSnapshot(const GameSnapshot& snapshot) {
     out << "ROWS " << snapshot.rows << "\n";
     out << "COLS " << snapshot.cols << "\n";
     out << "GAMEOVER " << (snapshot.gameOver ? 1 : 0) << "\n";
+    out << "WINNER " << (snapshot.winner.has_value() ? colorToString(snapshot.winner.value()) : "None") << "\n";
     out << "WHITESCORE " << snapshot.whiteScore << "\n";
     out << "BLACKSCORE " << snapshot.blackScore << "\n";
 
@@ -123,6 +124,13 @@ GameSnapshot decodeSnapshot(const std::string& text) {
                 entry.text = entry.text.substr(1);
             }
             snap.moveLog.push_back(entry);
+        } else if (tag == "WINNER") {
+    std::string winnerStr;
+    lineStream >> winnerStr;
+    if (winnerStr != "None") {
+        snap.winner = colorFromString(winnerStr);
+    }
+
         } else if (tag == "END") {
             break;
         }

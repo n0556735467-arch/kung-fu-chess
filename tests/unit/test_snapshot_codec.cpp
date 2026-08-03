@@ -54,3 +54,33 @@ TEST_CASE("Round-trips a piece with active motion") {
     CHECK(decoded.pieces[0].motion->progress == doctest::Approx(0.5));
     CHECK(decoded.gameOver == true);
 }
+
+TEST_CASE("Round-trips a snapshot with a winner") {
+    GameSnapshot snap;
+    snap.rows = 8;
+    snap.cols = 8;
+    snap.gameOver = true;
+    snap.whiteScore = 0;
+    snap.blackScore = 0;
+    snap.winner = Color::Black;
+
+    std::string text = encodeSnapshot(snap);
+    GameSnapshot decoded = decodeSnapshot(text);
+
+    REQUIRE(decoded.winner.has_value());
+    CHECK(decoded.winner.value() == Color::Black);
+}
+
+TEST_CASE("Round-trips a snapshot with no winner yet") {
+    GameSnapshot snap;
+    snap.rows = 8;
+    snap.cols = 8;
+    snap.gameOver = false;
+    snap.whiteScore = 0;
+    snap.blackScore = 0;
+
+    std::string text = encodeSnapshot(snap);
+    GameSnapshot decoded = decodeSnapshot(text);
+
+    CHECK_FALSE(decoded.winner.has_value());
+}

@@ -24,6 +24,7 @@ struct GameSnapshot {
     int whiteScore;
     int blackScore;
     std::vector<MoveLogEntry> moveLog;
+    std::optional<Color> winner;
 };
 
 #endif
